@@ -1,30 +1,6 @@
 document.addEventListener('DOMContentLoaded', function() {
-    // Hamburger menu toggle
+    // Hamburger menu overlay logic ONLY
     const hamburger = document.getElementById('hamburger-menu');
-    const sideMenu = document.getElementById('side-menu');
-    hamburger.addEventListener('click', function() {
-        sideMenu.style.display = 'block';
-        setTimeout(() => sideMenu.classList.toggle('open'), 10);
-    });
-    // Close side menu on link click
-    sideMenu.querySelectorAll('a').forEach(link => {
-        link.addEventListener('click', function() {
-            sideMenu.classList.remove('open');
-            setTimeout(() => sideMenu.style.display = 'none', 350);
-        });
-    });
-    // Dropdown logic for side menu
-    sideMenu.querySelectorAll('.dropdown-toggle').forEach(toggle => {
-        toggle.addEventListener('click', function(e) {
-            e.preventDefault();
-            const submenu = this.nextElementSibling;
-            if (submenu) {
-                submenu.style.display = submenu.style.display === 'block' ? 'none' : 'block';
-            }
-        });
-    });
-
-    // Hamburger menu overlay logic
     const menuOverlay = document.getElementById('menu-overlay');
     hamburger.addEventListener('click', function() {
         menuOverlay.style.display = 'flex';
@@ -101,14 +77,6 @@ document.addEventListener('DOMContentLoaded', function() {
             document.querySelectorAll('#main-nav .nav-link').forEach(l => l.classList.remove('active'));
             this.classList.add('active');
             animateSectionChange(this.dataset.target, this);
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        });
-    });
-    // Section boxes on welcome page
-    document.querySelectorAll('.section-box').forEach(box => {
-        box.addEventListener('click', function(e) {
-            e.preventDefault();
-            animateSectionChange(this.getAttribute('href').replace('#', ''), this);
             window.scrollTo({ top: 0, behavior: 'smooth' });
         });
     });
