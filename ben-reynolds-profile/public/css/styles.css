@@ -212,9 +212,15 @@ footer {
 
 /* --- Profile Header --- */
 .profile-header {
+    position: relative;
+    width: 100%;
+    min-height: 346px; /* 260px * 1.33 = 345.8px, extend by 33% */
+    height: auto;
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: flex-start;
+    overflow: hidden;
     margin-top: 2.5rem;
     margin-bottom: 2rem;
 }
@@ -226,18 +232,39 @@ footer {
     box-shadow: 0 4px 24px rgba(42, 82, 152, 0.18);
     border: 6px solid #111;
     background: #eaeaea;
+    position: relative;
+    z-index: 1;
 }
 .profile-name {
     font-size: 3rem;
     font-weight: 700;
     margin: 1.2rem 0 0.2rem 0;
     text-align: center;
+    position: relative;
+    z-index: 1;
+    color: #fff;
+    /* White outline with black shadow for contrast */
+    text-shadow:
+        2px 0 0 #fff, -2px 0 0 #fff, 0 2px 0 #fff, 0 -2px 0 #fff,
+        2px 2px 0 #fff, -2px -2px 0 #fff, 2px -2px 0 #fff, -2px 2px 0 #fff,
+        0 0 8px #000, 0 0 2px #000;
 }
 .profile-title {
     font-size: 1.5rem;
     color: #e0e6f7;
     margin-bottom: 0.5rem;
     text-align: center;
+    position: relative;
+    z-index: 1;
+}
+#bouncy-ball-canvas {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    pointer-events: auto;
+    min-height: 346px;
 }
 
 /* --- Section Buttons (Welcome Page) --- */
@@ -365,7 +392,7 @@ body:not(.on-home) #main-nav {
     display: block;
     height: 6px;
     width: 100%;
-    background: #fff;
+    background: #000; /* Black hamburger */
     border-radius: 3px;
     margin: 4px 0;
     transition: all 0.3s;
@@ -440,9 +467,37 @@ body.on-home .hamburger {
     display: none !important;
 }
 
-/* Hide search bar on overlay */
-.menu-overlay[style*="display: block"] ~ .search-bar {
+/* Hide search bar except on home */
+body:not(.on-home) .search-bar {
     display: none !important;
+}
+
+/* Make profile-header and canvas fill the panel */
+.profile-header {
+    position: relative;
+    width: 100%;
+    min-height: 346px; /* 260px * 1.33 = 345.8px, extend by 33% */
+    height: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    overflow: hidden;
+    margin-top: 2.5rem;
+    margin-bottom: 2rem;
+}
+#bouncy-ball-canvas {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    pointer-events: auto;
+    min-height: 346px;
+}
+.profile-picture, .profile-name, .profile-title {
+    position: relative;
+    z-index: 1;
 }
 
 /* --- Animations for Navigation --- */

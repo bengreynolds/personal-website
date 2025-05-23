@@ -124,21 +124,31 @@ document.addEventListener('DOMContentLoaded', function() {
     // Set initial body class
     updateBodyClass('home');
 
-    // --- Bouncy Ball Physics and Dog Animation in Profile Header (Canvas Only Dog) ---
+    // --- Bouncy Ball Physics and Dog Animation in Profile Header (Canvas Only Dog, Enhanced) ---
     (function() {
         const canvas = document.getElementById('bouncy-ball-canvas');
-        if (!canvas) return;
+        const header = document.getElementById('profile-header');
+        if (!canvas || !header) return;
         const ctx = canvas.getContext('2d');
-        const W = canvas.width;
-        const H = canvas.height;
-        const R = 22;
+        let W = 320, H = 120;
+        function resizeCanvas() {
+            W = header.clientWidth;
+            H = header.clientHeight;
+            canvas.width = W;
+            canvas.height = H;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        // Ball and dog state
+        const R = 6; // Ball is 200% smaller
         let ball = {
             x: W/2,
             y: R + 2,
             vx: (Math.random()-0.5)*2,
             vy: 0,
             radius: R,
-            color: '#2a5298',
+            color: '#e53935',
             isDragging: false,
             dragOffsetX: 0,
             dragOffsetY: 0
@@ -152,99 +162,93 @@ document.addEventListener('DOMContentLoaded', function() {
         let dogActive = false;
         let dog = null;
         let frameCount = 0;
+        let dogHasFetched = false;
+        let dogJumping = false;
+        let jumpReadyTimer = 0;
+        let fetchTarget = null;
+        let dogHoldingBall = false;
+        let dogExiting = false;
+        let lastMouse = {x: W/2, y: H-64};
 
-        function drawBall() {
-            ctx.save();
-            ctx.clearRect(0,0,W,H);
-            ctx.beginPath();
-            ctx.arc(ball.x, ball.y, ball.radius, 0, 2*Math.PI);
-            ctx.fillStyle = ball.color;
-            ctx.shadowColor = '#1e3c72';
-            ctx.shadowBlur = 12;
-            ctx.fill();
-            ctx.shadowBlur = 0;
-            // highlight
-            ctx.beginPath();
-            ctx.arc(ball.x-ball.radius/3, ball.y-ball.radius/3, ball.radius/3, 0, 2*Math.PI);
-            ctx.fillStyle = 'rgba(255,255,255,0.18)';
-            ctx.fill();
-            ctx.restore();
-        }
+        // Mouse tracking for return
+        canvas.addEventListener('mousemove', function(e) {
+            const rect = canvas.getBoundingClientRect();
+            lastMouse.x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
+            lastMouse.y = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
+        });
+        canvas.addEventListener('touchmove', function(e) {
+            const rect = canvas.getBoundingClientRect();
+            lastMouse.x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
+            lastMouse.y = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
+        });
 
-        function drawDog(ctx, x, y, frame) {
-            // Body
+        // Pixel border collie drawing
+        function drawPixelCollie(ctx, x, y, frame, facingLeft, jumping, runPhase) {
+            const px = 4;
+            const C = {
+                B: '#222', W: '#fff', G: '#888', T: '#b77b4b', P: '#e0cfa6', N: '#c96', E: '#222', S: '#555',
+            };
+            const dogMap = [
+                '.....BBBB.......',
+                '....BWWWWB......',
+                '...BWWWWWWB.....',
+                '...BWWWWWWB.....',
+                '..BWWWWWWWWB....',
+                '..BWWWWWWWWB....',
+                '..BWWWBWWWWB....',
+                '..BWWWBWWWWB....',
+                '..BWWWWWWWWB....',
+                '..BWWWWWWWWB....',
+                '...BWWWWWWB.....',
+                '...BWWWWWWB.....',
+                '....BWWWWB......',
+                '.....BBBB.......',
+                '....P....P......',
+                '...P......P.....',
+            ];
+            let legOffset = jumping ? -Math.abs(Math.sin(frame/6))*4 : Math.sin(runPhase/3)*2;
             ctx.save();
             ctx.translate(x, y);
-            ctx.scale(1.1, 1);
-            ctx.beginPath();
-            ctx.ellipse(0, 20, 28, 16, 0, 0, Math.PI * 2);
-            ctx.fillStyle = "#b77b4b";
-            ctx.fill();
-            ctx.restore();
-            // Head
-            ctx.save();
-            ctx.translate(x + 30, y + 5);
-            ctx.beginPath();
-            ctx.arc(0, 0, 14, 0, Math.PI * 2);
-            ctx.fillStyle = "#b77b4b";
-            ctx.fill();
-            // Ear (left)
-            ctx.beginPath();
-            ctx.ellipse(-10, -8, 5, 10, -0.5, 0, Math.PI * 2);
-            ctx.fillStyle = "#7a4a1e";
-            ctx.fill();
-            // Ear (right)
-            ctx.beginPath();
-            ctx.ellipse(10, -8, 5, 10, 0.5, 0, Math.PI * 2);
-            ctx.fillStyle = "#7a4a1e";
-            ctx.fill();
-            // Eye
-            ctx.beginPath();
-            ctx.arc(5, -2, 2, 0, Math.PI * 2);
-            ctx.fillStyle = "#222";
-            ctx.fill();
-            // Nose
-            ctx.beginPath();
-            ctx.arc(12, 2, 2, 0, Math.PI * 2);
-            ctx.fillStyle = "#222";
-            ctx.fill();
-            ctx.restore();
-            // Legs (simple walk animation)
-            for (let i = 0; i < 2; i++) {
-                ctx.save();
-                ctx.translate(x - 10 + i * 20, y + 32);
-                ctx.rotate(Math.sin(frame / 5 + i) * 0.2);
-                ctx.fillStyle = "#b77b4b";
-                ctx.fillRect(-3, 0, 6, 16);
-                ctx.restore();
+            if (facingLeft) ctx.scale(-1, 1);
+            for (let row = 0; row < dogMap.length; row++) {
+                for (let col = 0; col < dogMap[row].length; col++) {
+                    let color = null;
+                    switch (dogMap[row][col]) {
+                        case 'B': color = C.B; break;
+                        case 'W': color = C.W; break;
+                        case 'G': color = C.G; break;
+                        case 'T': color = C.T; break;
+                        case 'P': color = C.P; break;
+                        case 'N': color = C.N; break;
+                        case 'E': color = C.E; break;
+                        case 'S': color = C.S; break;
+                        default: color = null;
+                    }
+                    if (color) {
+                        let yOffset = 0;
+                        if (row >= 14 && (col === 4 || col === 7 || col === 11 || col === 14)) {
+                            yOffset = legOffset;
+                        }
+                        ctx.fillStyle = color;
+                        ctx.fillRect(col*px, row*px + yOffset, px, px);
+                    }
+                }
             }
-            for (let i = 0; i < 2; i++) {
-                ctx.save();
-                ctx.translate(x - 6 + i * 12, y + 32);
-                ctx.rotate(-Math.sin(frame / 5 + i) * 0.2);
-                ctx.fillStyle = "#b77b4b";
-                ctx.fillRect(-2, 0, 4, 12);
-                ctx.restore();
-            }
-            // Tail (wag)
-            ctx.save();
-            ctx.translate(x - 28, y + 20);
-            ctx.rotate(Math.sin(frame / 4) * 0.5 - 0.5);
-            ctx.beginPath();
-            ctx.moveTo(0, 0);
-            ctx.quadraticCurveTo(-18, -8, -28, 0);
-            ctx.lineWidth = 5;
-            ctx.strokeStyle = "#7a4a1e";
-            ctx.stroke();
+            ctx.fillStyle = C.E;
+            ctx.fillRect((facingLeft ? 4 : 11)*px, 5*px, px, px);
             ctx.restore();
         }
 
+        // Animation loop
         function animate(time) {
             frameCount++;
             if (!lastTime) lastTime = time;
-            let dt = (time - lastTime) / 16.67; // ~60fps
+            let dt = (time - lastTime) / 16.67;
             lastTime = time;
-            if (!ball.isDragging && !dogActive) {
+            // Clear canvas ONCE per frame
+            ctx.clearRect(0,0,W,H);
+            // Ball physics (keep moving during fetch)
+            if (!ball.isDragging && !dogHoldingBall && !dogExiting) {
                 ball.vy += gravity * dt;
                 ball.x += ball.vx * dt;
                 ball.y += ball.vy * dt;
@@ -255,12 +259,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     ball.vx *= friction;
                     if (Math.abs(ball.vy) < 1) ball.vy = 0;
                 }
-                // Bounce on ceiling
                 if (ball.y - ball.radius < 0) {
                     ball.y = ball.radius;
                     ball.vy *= -bounce;
                 }
-                // Bounce on walls
                 if (ball.x - ball.radius < 0) {
                     ball.x = ball.radius;
                     ball.vx *= -bounce;
@@ -270,14 +272,81 @@ document.addEventListener('DOMContentLoaded', function() {
                     ball.vx *= -bounce;
                 }
             }
-            ctx.clearRect(0,0,W,H);
-            drawBall();
-            // Draw dog if active
-            if (dogActive && dog) {
-                drawDog(ctx, dog.x, dog.y, frameCount);
+            // Draw ball
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(ball.x, ball.y, ball.radius, 0, 2*Math.PI);
+            ctx.fillStyle = ball.color;
+            ctx.shadowColor = '#b71c1c';
+            ctx.shadowBlur = 12;
+            ctx.fill();
+            ctx.shadowBlur = 0;
+            ctx.beginPath();
+            ctx.arc(ball.x-ball.radius/3, ball.y-ball.radius/3, ball.radius/3, 0, 2*Math.PI);
+            ctx.fillStyle = 'rgba(255,255,255,0.18)';
+            ctx.fill();
+            ctx.restore();
+            // Draw dog if active or jumping or holding ball or exiting
+            if ((dogActive && dog) || dogJumping || dogHoldingBall || dogExiting) {
+                let dogY = dogActive && dog ? dog.y : H-64;
+                let dogX = dogActive && dog ? dog.x : W-64;
+                let facingLeft = true;
+                let runPhase = frameCount;
+                // If jumping, jump from directly beneath the ball
+                if (dogJumping && !dogActive) {
+                    dogX = ball.x-24;
+                    let jumpT = (Math.sin(frameCount/20)+1)/2;
+                    let jumpHeight = (ball.y-24)*1.6;
+                    dogY = H-64 - jumpT*jumpHeight;
+                }
+                // If chasing, move from last jump position to ball
+                if (dogActive && dog && fetchTarget) {
+                    let dx = fetchTarget.x - dog.x;
+                    let dy = fetchTarget.y - dog.y;
+                    let dist = Math.sqrt(dx*dx + dy*dy);
+                    let speed = 2;
+                    if (dist > speed) {
+                        dog.x += dx/dist*speed;
+                        dog.y += dy/dist*speed;
+                    } else {
+                        dog.x = fetchTarget.x;
+                        dog.y = fetchTarget.y;
+                        dogActive = false;
+                        dogHoldingBall = true;
+                    }
+                }
+                // If holding ball, move both to mouse position
+                if (dogHoldingBall) {
+                    let dx = lastMouse.x - dogX;
+                    let dy = lastMouse.y - dogY;
+                    let dist = Math.sqrt(dx*dx + dy*dy);
+                    let speed = 2;
+                    if (dist > speed) {
+                        dogX += dx/dist*speed;
+                        dogY += dy/dist*speed;
+                        ball.x = dogX+24;
+                        ball.y = dogY+24;
+                    } else {
+                        dogX = lastMouse.x;
+                        dogY = lastMouse.y;
+                        ball.x = dogX+24;
+                        ball.y = dogY+24;
+                        dogHoldingBall = false;
+                        dogExiting = true;
+                    }
+                }
+                // If exiting, move dog left out of panel
+                if (dogExiting) {
+                    dogX -= 3;
+                    if (dogX < -64) {
+                        dogExiting = false;
+                        dog = null;
+                    }
+                }
+                drawPixelCollie(ctx, dogX, dogY, frameCount, facingLeft, dogJumping, runPhase);
             }
-            // Detect rest
-            if (!ball.isDragging && !dogActive && Math.abs(ball.vx) < 0.2 && Math.abs(ball.vy) < 0.2 && ball.y + ball.radius >= H - 1) {
+            // Detect rest for fetch
+            if (!ball.isDragging && !dogActive && !dogHasFetched && !dogHoldingBall && !dogExiting && Math.abs(ball.vx) < 0.2 && Math.abs(ball.vy) < 0.2 && ball.y + ball.radius >= H - 1) {
                 restTimer += dt;
                 if (restTimer > 60) { // ~1 second
                     triggerDog();
@@ -305,6 +374,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 lastDrag = {x: px, y: py, time: Date.now()};
                 ball.dragOffsetX = dx;
                 ball.dragOffsetY = dy;
+                jumpReadyTimer = 0;
             }
         }
         function pointerMove(e) {
@@ -315,6 +385,16 @@ document.addEventListener('DOMContentLoaded', function() {
             ball.x = Math.max(ball.radius, Math.min(W-ball.radius, px - ball.dragOffsetX));
             ball.y = Math.max(ball.radius, Math.min(H-ball.radius, py - ball.dragOffsetY));
             lastDrag = {x: px, y: py, time: Date.now()};
+            // Lower threshold for jump (from 1/4 to 1/2 height)
+            if (ball.y < H/2) {
+                jumpReadyTimer += 1/60; // assuming ~60fps
+                if (jumpReadyTimer > 1.5 && !dogJumping) {
+                    dogJumping = true;
+                }
+            } else {
+                jumpReadyTimer = 0;
+                dogJumping = false;
+            }
         }
         function pointerUp(e) {
             if (!ball.isDragging || dogActive) return;
@@ -328,6 +408,15 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             dragStart = null;
             lastDrag = null;
+            // After throw, allow dog to fetch again
+            dogHasFetched = false;
+            // If dog was jumping, immediately chase the ball from last jump position
+            if (dogJumping) {
+                dogJumping = false;
+                dog = {x: ball.x-24, y: H-64};
+                fetchTarget = {x: ball.x-24, y: ball.y-24};
+                dogActive = true;
+            }
         }
         canvas.addEventListener('mousedown', pointerDown);
         canvas.addEventListener('mousemove', pointerMove);
@@ -336,74 +425,15 @@ document.addEventListener('DOMContentLoaded', function() {
         canvas.addEventListener('touchmove', pointerMove, {passive:false});
         window.addEventListener('touchend', pointerUp);
 
-        // Dog animation (canvas only)
         function triggerDog() {
-            if (dogActive) return;
+            if (dogActive || dogHasFetched) return;
             dogActive = true;
-            // Pick a random edge (top, left, right)
-            const edges = ['left','right','top'];
-            const edge = edges[Math.floor(Math.random()*edges.length)];
-            let startX, startY;
-            if (edge === 'left') {
-                startX = -60; startY = Math.random()*(H-60);
-            } else if (edge === 'right') {
-                startX = W+60; startY = Math.random()*(H-60);
-            } else {
-                startX = Math.random()*(W-60); startY = -60;
-            }
-            dog = {x: startX, y: startY};
-            // Animate dog to ball
-            const destX = ball.x-ball.radius;
-            const destY = ball.y-ball.radius;
-            const steps = 40;
-            let step = 0;
-            function moveDogToBall() {
-                step++;
-                const t = step/steps;
-                dog.x = startX + (destX-startX)*t;
-                dog.y = startY + (destY-startY)*t;
-                if (step < steps) {
-                    requestAnimationFrame(moveDogToBall);
-                } else {
-                    // Grab ball, move both to lower left
-                    moveDogWithBall();
-                }
-            }
-            function moveDogWithBall() {
-                const targetX = 10;
-                const targetY = H-60;
-                let dstep = 0;
-                const dsteps = 40;
-                const startDogX = dog.x;
-                const startDogY = dog.y;
-                const startBallX = ball.x;
-                const startBallY = ball.y;
-                function move() {
-                    dstep++;
-                    const t = dstep/dsteps;
-                    dog.x = startDogX + (targetX-startDogX)*t;
-                    dog.y = startDogY + (targetY-startDogY)*t;
-                    ball.x = startBallX + (targetX+30-startBallX)*t;
-                    ball.y = startBallY + (targetY+30-startBallY)*t;
-                    if (dstep < dsteps) {
-                        requestAnimationFrame(move);
-                    } else {
-                        // Drop ball, dog leaves
-                        setTimeout(()=>{
-                            dogActive = false;
-                            dog = null;
-                            ball.vx = 0; ball.vy = 0;
-                            ball.x = targetX+30; ball.y = targetY+30;
-                        }, 400);
-                    }
-                }
-                move();
-            }
-            moveDogToBall();
+            dogHasFetched = true;
+            dog = {x: W+64, y: H-64};
+            fetchTarget = {x: ball.x-24, y: ball.y-24};
         }
 
         // Start animation on page load
-        drawBall();
         animationFrame = requestAnimationFrame(animate);
     })();
 });
