@@ -1,34 +1,5 @@
 document.addEventListener('DOMContentLoaded', function() {
-    // Hamburger menu overlay logic ONLY
-    const hamburger = document.getElementById('hamburger-menu');
-    const menuOverlay = document.getElementById('menu-overlay');
-    hamburger.addEventListener('click', function() {
-        menuOverlay.style.display = 'flex';
-        setTimeout(() => menuOverlay.classList.add('open'), 10);
-    });
-    // Close overlay on menu link click or outside click
-    menuOverlay.addEventListener('click', function(e) {
-        if (e.target === menuOverlay) {
-            menuOverlay.classList.remove('open');
-            setTimeout(() => menuOverlay.style.display = 'none', 300);
-        }
-    });
-    menuOverlay.querySelectorAll('a').forEach(link => {
-        link.addEventListener('click', function() {
-            menuOverlay.classList.remove('open');
-            setTimeout(() => menuOverlay.style.display = 'none', 300);
-        });
-    });
-    // Dropdown logic for overlay
-    menuOverlay.querySelectorAll('.dropdown-toggle').forEach(toggle => {
-        toggle.addEventListener('click', function(e) {
-            e.preventDefault();
-            const parent = this.parentElement;
-            parent.classList.toggle('open');
-        });
-    });
-
-    // Set body class for home page nav/hamburger visibility
+    // Set body class for home page nav visibility
     function updateBodyClass(targetId) {
         if (targetId === 'home') {
             document.body.classList.add('on-home');
@@ -338,40 +309,34 @@ document.addEventListener('DOMContentLoaded', function() {
         animate();
     }
 
-    // SPA navigation (main nav, section boxes, and overlay menu)
-    function animateSectionChange(targetId, linkEl) {
+    // SPA navigation (main nav only)
+    function animateSectionChange(targetId) {
         updateBodyClass(targetId);
-        // Hide profile header except on home
         const profileHeader = document.getElementById('profile-header');
-        const hamburger = document.getElementById('hamburger-menu');
+        // Show profile header only on home
         if (targetId === 'home') {
             profileHeader.style.display = 'flex';
-            if (hamburger) hamburger.style.display = 'none';
-            setTimeout(initDogBallAnimation, 10); // (Re)initialize animation
+            setTimeout(initDogBallAnimation, 10);
         } else {
             profileHeader.style.display = 'none';
-            if (hamburger) hamburger.style.display = 'flex';
             if (dogBallAnimationFrame) {
                 cancelAnimationFrame(dogBallAnimationFrame);
                 dogBallAnimationFrame = null;
             }
         }
-        // Blank/shrink all content
+        // Animate section change
         const mainContent = document.getElementById('main-content');
         mainContent.classList.add('fade-shrink');
         setTimeout(() => {
-            // Hide all sections
             document.querySelectorAll('main > section').forEach(section => {
                 section.style.display = 'none';
             });
-            // Show and animate target section
             const targetSection = document.getElementById(targetId);
             targetSection.style.display = 'block';
-            // Typed title effect (keep typed style after animation)
             const h1 = targetSection.querySelector('.typed-title');
             if (h1) {
                 h1.classList.remove('type-out');
-                void h1.offsetWidth; // force reflow
+                void h1.offsetWidth;
                 h1.classList.add('type-out');
                 setTimeout(() => h1.classList.remove('type-out'), 1200);
             }
@@ -379,33 +344,13 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 400);
     }
 
-    // Main nav buttons (welcome page)
+    // Main nav buttons (now always visible)
     document.querySelectorAll('#main-nav .nav-link').forEach(btn => {
         btn.addEventListener('click', function(e) {
             e.preventDefault();
             document.querySelectorAll('#main-nav .nav-link').forEach(l => l.classList.remove('active'));
             this.classList.add('active');
-            animateSectionChange(this.dataset.target, this);
-            // window.scrollTo({ top: 0, behavior: 'smooth' }); // Removed to prevent snapping to top
-        });
-    });
-    // Overlay menu links
-    menuOverlay.querySelectorAll('.menu-link').forEach(link => {
-        link.addEventListener('click', function(e) {
-            // If it's a subsection, scroll to anchor after animation
-            const href = this.getAttribute('href');
-            if (href.includes('-')) {
-                e.preventDefault();
-                const [sectionId, anchor] = href.replace('#', '').split('-');
-                animateSectionChange(sectionId, this);
-                setTimeout(() => {
-                    document.getElementById(href.replace('#', '')).scrollIntoView({ behavior: 'smooth' });
-                }, 900);
-            } else {
-                e.preventDefault();
-                animateSectionChange(href.replace('#', ''), this);
-                // window.scrollTo({ top: 0, behavior: 'smooth' }); // Removed to prevent snapping to top
-            }
+            animateSectionChange(this.dataset.target);
         });
     });
 
@@ -434,62 +379,4 @@ document.addEventListener('DOMContentLoaded', function() {
     updateBodyClass('home');
     // Initialize dog/ball animation on first load
     initDogBallAnimation();
-
-    // --- Navigation Arrows Logic ---
-    const mainSections = [
-        {id: 'home', label: 'Home'},
-        {id: 'about', label: 'About'},
-        {id: 'timeline', label: 'Timeline'},
-        {id: 'projects', label: 'Past Projects'},
-        {id: 'contact', label: 'Contact'}
-    ];
-    function getCurrentSectionIndex() {
-        for (let i = 0; i < mainSections.length; i++) {
-            const sec = document.getElementById(mainSections[i].id);
-            if (sec && sec.style.display === 'block') return i;
-        }
-        return 0;
-    }
-    function renderPageArrows() {
-        const idx = getCurrentSectionIndex();
-        const arrows = document.getElementById('page-arrows');
-        arrows.innerHTML = '';
-        if (idx > 0) {
-            const back = document.createElement('button');
-            back.innerHTML = '&#8592;';
-            back.title = 'Previous';
-            back.className = 'page-arrow';
-            back.onclick = () => gotoSection(idx-1);
-            arrows.appendChild(back);
-        }
-        if (idx < mainSections.length-1) {
-            const fwd = document.createElement('button');
-            fwd.innerHTML = '&#8594;';
-            fwd.title = 'Next';
-            fwd.className = 'page-arrow';
-            fwd.onclick = () => gotoSection(idx+1);
-            arrows.appendChild(fwd);
-        }
-    }
-    function gotoSection(idx) {
-        const sec = mainSections[idx];
-        document.querySelectorAll('main > section').forEach(s => s.style.display = 'none');
-        document.getElementById(sec.id).style.display = 'block';
-        // Update nav active
-        document.querySelectorAll('#main-nav .nav-link').forEach((btn, i) => btn.classList.toggle('active', i === idx));
-        renderPageArrows();
-        // window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-    // Initial render
-    renderPageArrows();
-    // Re-render arrows on nav click/section change
-    document.querySelectorAll('#main-nav .nav-link').forEach((btn, i) => {
-        btn.addEventListener('click', () => setTimeout(renderPageArrows, 450));
-    });
-    // --- Remove subsections from overlay menu on click ---
-    document.querySelectorAll('.menu-link').forEach(link => {
-        link.addEventListener('click', function() {
-            document.querySelectorAll('.submenu').forEach(sub => sub.style.display = 'none');
-        });
-    });
 });

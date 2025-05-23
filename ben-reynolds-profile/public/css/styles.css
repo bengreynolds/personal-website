@@ -341,11 +341,6 @@ footer {
     border: 2px solid var(--accent);
 }
 
-/* Hide main nav except on home */
-body:not(.on-home) #main-nav {
-    display: none !important;
-}
-
 /* --- Footer Modern Icons --- */
 .footer-icons-modern {
     display: flex;
@@ -649,4 +644,37 @@ main > section:not(#home) {
         font-size: 1.1rem;
         padding: 0.5rem 1.2rem;
     }
+}
+
+.nav-panel {
+    background: #f3f4f7;
+    box-shadow: 0 1px 4px rgba(42,82,152,0.04);
+    border-radius: 10px;
+    margin: 0 auto 1.2rem auto;
+    max-width: 700px;
+    padding: 0.3rem 0.7rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 38px;
+    position: relative;
+    top: 0;
+    z-index: 2;
+}
+#main-nav {
+    margin: 0;
+}
+.nav-buttons {
+    gap: 0.5rem;
+}
+.nav-link {
+    font-size: 1rem;
+    padding: 0.3rem 1.1rem;
+    border-radius: 16px;
+    border-width: 1.5px;
+    margin: 0;
+}
+
+.profile-header {
+    margin-bottom: 1.2rem;
 }
