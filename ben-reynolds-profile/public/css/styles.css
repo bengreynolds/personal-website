@@ -26,6 +26,7 @@ body {
     flex: 1 0 auto;
     display: flex;
     flex-direction: column;
+    padding-bottom: 80px; /* Adds space at the bottom to prevent content from being hidden behind footer */
 }
 
 header {
@@ -201,36 +202,41 @@ section {
 footer {
     position: fixed;
     bottom: 0;
+    left: 0;
     width: 100%;
-    z-index: 1000;
+    z-index: 9999; /* Increased z-index to ensure it's on top of everything */
     background: var(--surface);
-    box-shadow: var(--shadow);
-    border-top: 1px solid var(--muted);
-    padding: 0.5rem;
+    box-shadow: 0 -2px 12px rgba(42, 82, 152, 0.1);
+    border-top: 1px solid rgba(42, 82, 152, 0.15);
+    padding: 0.75rem 1rem;
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 50px;
+    height: 60px;
     overflow: visible;
 }
 
 .footer-content {
-    display: none;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
 }
 .social-links {
     display: flex;
-    gap: 1rem;
+    gap: 1.5rem;
     list-style: none;
     padding: 0;
     margin: 0;
 }
 .social-links a {
-    font-size: 1.2rem;
+    font-size: 1.5rem;
     color: var(--primary);
-    transition: color 0.2s;
+    transition: color 0.2s, transform 0.2s;
 }
 .social-links a:hover {
     color: var(--accent);
+    transform: scale(1.15);
 }
 
 /* --- Profile Header --- */
@@ -684,7 +690,8 @@ main > section:not(#home) {
         padding: 1.2rem 0.7rem 0 0.7rem;
     }
     footer {
-        padding: 1.2rem 0.7rem;
+        padding: 0.75rem 0.5rem;
+        height: 50px;
     }
     .profile-picture {
         width: 120px;
@@ -748,31 +755,4 @@ main > section:not(#home) {
 
 .profile-header {
     margin-bottom: 1.2rem;
-}
-
-/* --- Footer Panel Adjustments --- */
-footer {
-    background: var(--surface);
-    box-shadow: var(--shadow);
-    border-top: 1px solid var(--muted);
-    padding: 0.5rem;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 50px;
-    overflow: visible; /* Ensure logos are visible */
-    position: relative; /* Ensure footer content is layered properly */
-}
-footer .social-links {
-    display: flex;
-    gap: 1rem;
-    z-index: 10; /* Bring logos to the front */
-}
-footer .social-links a {
-    font-size: 1.2rem;
-    color: var(--primary);
-    transition: color 0.2s;
-}
-footer .social-links a:hover {
-    color: var(--accent);
 }
