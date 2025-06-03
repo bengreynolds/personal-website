@@ -4,8 +4,7 @@
   "description": "A professional profile website for Ben Reynolds, an engineer, featuring a modern and minimalist design.",
   "main": "public/index.html",
   "scripts": {
-    "start": "live-server public",
-    "build": "echo 'Build step can be added here.'"
+    "start": "live-server public"
   },
   "keywords": [
     "profile",
@@ -15,13 +14,5 @@
     "minimalist"
   ],
   "author": "Ben Reynolds",
-  "license": "MIT",
-  "devDependencies": {
-    "live-server": "^1.2.1"
-  },
-  "browserslist": [
-    "> 1%",
-    "last 2 versions",
-    "not dead"
-  ]
+  "license": "MIT"
 }

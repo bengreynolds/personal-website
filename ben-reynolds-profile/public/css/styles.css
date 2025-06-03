@@ -64,17 +64,24 @@ nav {
     justify-content: center;
     gap: 2rem;
     margin: 1rem 0 0 0;
+    background: var(--surface);
+    box-shadow: var(--shadow);
+    border-radius: 16px;
+    padding: 1rem;
+    margin: 1rem auto;
+    max-width: 1000px;
 }
 nav a {
-    color: #fff;
+    color: var(--primary);
     text-decoration: none;
-    font-weight: 500;
-    padding: 0.5rem 1.2rem;
+    font-weight: 600;
+    padding: 0.7rem 1.5rem;
     border-radius: 24px;
-    transition: background 0.2s;
+    transition: background 0.2s, color 0.2s;
 }
 nav a:hover, nav a.active {
-    background: rgba(255,255,255,0.12);
+    background: var(--primary);
+    color: #fff;
 }
 
 .search-bar {
@@ -190,33 +197,36 @@ section {
     background: var(--accent);
 }
 
+/* --- Footer Always Visible --- */
 footer {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    z-index: 1000;
     background: var(--surface);
-    box-shadow: 0 -2px 8px rgba(42,82,152,0.04);
-    border-radius: 16px 16px 0 0;
-    margin: 2rem auto 0 auto;
-    max-width: 1000px;
-    padding: 2rem 1.5rem;
-    text-align: center;
-    flex-shrink: 0;
-}
-.footer-content {
+    box-shadow: var(--shadow);
+    border-top: 1px solid var(--muted);
+    padding: 0.5rem;
     display: flex;
-    flex-direction: column;
+    justify-content: center;
     align-items: center;
-    gap: 1rem;
+    height: 50px;
+    overflow: visible;
+}
+
+.footer-content {
+    display: none;
 }
 .social-links {
     display: flex;
-    gap: 1.5rem;
+    gap: 1rem;
     list-style: none;
     padding: 0;
     margin: 0;
 }
 .social-links a {
+    font-size: 1.2rem;
     color: var(--primary);
-    font-weight: 500;
-    text-decoration: none;
     transition: color 0.2s;
 }
 .social-links a:hover {
@@ -250,7 +260,6 @@ footer {
 }
 .profile-name {
     font-size: 3rem;
-    font-weight: 700;
     margin: 1.2rem 0 0.2rem 0;
     text-align: center;
     position: relative;
@@ -375,12 +384,25 @@ footer {
     display: block;
 }
 .type-out {
+    overflow: hidden;
+    white-space: nowrap;
     border-right: 0.15em solid var(--accent);
-    animation: typeOut 1.2s steps(30, end) 1;
+    animation: 
+        typeOut 1s steps(30, end) forwards,
+        blinkCursor 0.75s step-end 3;
+    width: 0;
+    font-size: 3.2rem;
+    font-weight: 800;
+    color: var(--primary);
+    margin: 2rem auto 1.5rem auto;
+    text-align: center;
+    display: block;
 }
-@keyframes typeOut {
-    from { width: 0; }
-    to { width: 100%; }
+
+/* Remove border after animation ends */
+.type-out:after {
+    content: ''; /* Empty content */
+    border-right: none;
 }
 
 /* --- Hamburger and Overlay Menu --- */
@@ -535,34 +557,83 @@ body:not(.on-home) .search-bar {
     from { width: 0; }
     to { width: 100%; }
 }
+@keyframes blinkCursor {
+    from, to { border-color: transparent; }
+    50% { border-color: var(--accent); }
+}
 .type-out {
     overflow: hidden;
     white-space: nowrap;
-    border-right: 0.15em solid #2a5298;
-    animation: typeOut 1s steps(30, end) 1;
+    border-right: 0.15em solid var(--accent);
+    animation: 
+        typeOut 1s steps(30, end) forwards,
+        blinkCursor 0.75s step-end 3;
+    width: 0;
     font-size: 3.2rem;
     font-weight: 800;
-    color: #2a5298;
+    color: var(--primary);
     margin: 2rem auto 1.5rem auto;
     text-align: center;
     display: block;
 }
 
-/* --- Per-page Modern Gradients/Backgrounds --- */
-.page-gradient-home {
-    background: linear-gradient(135deg, #f7fafc 0%, #e3e9f7 100%);
+/* --- Navigation Bar Consistency --- */
+nav {
+    background: var(--surface);
+    box-shadow: var(--shadow);
+    border-radius: 16px;
+    padding: 1rem;
+    margin: 1rem auto;
+    max-width: 1000px;
 }
-.page-gradient-about {
-    background: linear-gradient(135deg, #f7fafc 0%, #e0f7fa 100%);
+nav a {
+    color: var(--primary);
+    font-size: 1.1rem;
+    font-weight: 600;
+    padding: 0.7rem 1.5rem;
+    border-radius: 24px;
+    transition: background 0.2s, color 0.2s;
 }
-.page-gradient-timeline {
-    background: linear-gradient(135deg, #f7fafc 0%, #fceabb 100%);
+nav a:hover, nav a.active {
+    background: var(--primary);
+    color: #fff;
 }
-.page-gradient-projects {
-    background: linear-gradient(135deg, #f7fafc 0%, #f5e6ff 100%);
+
+/* --- Panel Consistency --- */
+.panel {
+    background: var(--surface);
+    box-shadow: var(--shadow);
+    border-radius: 16px;
+    padding: 2rem;
+    margin: 1.5rem auto;
+    max-width: 1000px;
 }
-.page-gradient-contact {
-    background: linear-gradient(135deg, #f7fafc 0%, #ffe6e6 100%);
+
+/* --- Panel Horizontal Size Adjustment --- */
+.panel {
+    width: 95%;
+    max-width: none;
+}
+
+.panel h2 {
+    color: var(--primary);
+    font-size: 1.8rem;
+    margin-bottom: 1rem;
+}
+.panel p {
+    color: var(--text);
+    font-size: 1rem;
+    line-height: 1.6;
+}
+
+/* --- Page Gradient Consistency --- */
+.page-gradient {
+    background: linear-gradient(135deg, var(--background) 0%, var(--surface) 100%);
+    padding: 2rem;
+    border-radius: 16px;
+    box-shadow: var(--shadow);
+    margin: 1.5rem auto;
+    max-width: 1000px;
 }
 
 /* Remove top margin for all sections except home */
@@ -677,4 +748,31 @@ main > section:not(#home) {
 
 .profile-header {
     margin-bottom: 1.2rem;
+}
+
+/* --- Footer Panel Adjustments --- */
+footer {
+    background: var(--surface);
+    box-shadow: var(--shadow);
+    border-top: 1px solid var(--muted);
+    padding: 0.5rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 50px;
+    overflow: visible; /* Ensure logos are visible */
+    position: relative; /* Ensure footer content is layered properly */
+}
+footer .social-links {
+    display: flex;
+    gap: 1rem;
+    z-index: 10; /* Bring logos to the front */
+}
+footer .social-links a {
+    font-size: 1.2rem;
+    color: var(--primary);
+    transition: color 0.2s;
+}
+footer .social-links a:hover {
+    color: var(--accent);
 }
