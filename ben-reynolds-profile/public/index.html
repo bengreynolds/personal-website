@@ -6,14 +6,70 @@
     <title>Ben Reynolds - Professional Profile</title>
     <link rel="stylesheet" href="css/styles.css">
     <script src="js/main.js" defer></script>
+    <style>
+        /* Inline styles for the compact header */
+        .profile-header {
+            min-height: 120px !important;
+            height: auto;
+            flex-direction: row !important;
+            justify-content: center !important;
+            gap: 20px;
+            padding: 15px 0;
+            margin-top: 1rem !important;
+            margin-bottom: 1rem !important;
+        }
+        .profile-picture {
+            width: 100px !important;
+            height: 100px !important;
+            border-radius: 0 !important; /* Square profile picture */
+            margin: 0 !important;
+        }
+        .profile-info {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: flex-start;
+        }
+        .profile-name {
+            margin: 0 !important;
+            font-size: 2.5rem !important;
+            text-align: left !important;
+        }
+        .profile-title {
+            margin: 5px 0 0 0 !important;
+            text-align: left !important;
+        }
+        #bouncy-ball-canvas {
+            min-height: 120px !important;
+        }
+        
+        @media (max-width: 600px) {
+            .profile-header {
+                flex-direction: column !important;
+                gap: 10px;
+            }
+            .profile-info {
+                align-items: center;
+            }
+            .profile-name {
+                text-align: center !important;
+                font-size: 2rem !important;
+            }
+            .profile-title {
+                text-align: center !important;
+            }
+        }
+    </style>
 </head>
 <body>
     <header id="main-header">
         <div class="profile-header" id="profile-header" style="position:relative;">
             <canvas id="bouncy-ball-canvas" style="display:block;position:absolute;top:0;left:0;width:100%;height:100%;z-index:0;"></canvas>
             <img class="profile-picture" src="assets/profile-placeholder.png" alt="Profile Photo" style="position:relative;z-index:1;" />
-            <h1 class="profile-name typed-title" id="typed-title" style="position:relative;z-index:1;">Ben Reynolds</h1>
-            <p class="profile-title" style="position:relative;z-index:1;">Engineer</p>
+            <div class="profile-info" style="position:relative;z-index:1;">
+                <h1 class="profile-name typed-title" id="typed-title">Ben Reynolds</h1>
+                <p class="profile-title">Engineer</p>
+            </div>
         </div>
     </header>
     <div class="nav-panel">
@@ -105,11 +161,6 @@
             <div class="about-text">
                 <h1 class="typed-title" id="contact-title">Contact</h1>
                 <p>If you would like to connect or learn more about my work, feel free to reach out through my contact page or follow me on social media.</p>
-                <ul class="social-links">
-                    <li><a href="https://www.linkedin.com/in/ben-reynolds" target="_blank">LinkedIn</a></li>
-                    <li><a href="https://github.com/benreynolds" target="_blank">GitHub</a></li>
-                    <li><a href="mailto:ben.reynolds@example.com">Email</a></li>
-                </ul>
             </div>
         </section>
     </main>
