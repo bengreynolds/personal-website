@@ -1,4 +1,16 @@
 document.addEventListener('DOMContentLoaded', function() {
+    // Check if coming from welcome page
+    const targetSection = localStorage.getItem('targetSection');
+    if (targetSection) {
+        // Clear storage so it doesn't persist on refresh
+        localStorage.removeItem('targetSection');
+        // Navigate to the target section
+        const navBtn = document.querySelector(`.nav-link[data-target="${targetSection}"]`);
+        if (navBtn) {
+            navBtn.click();
+        }
+    }
+
     // Set body class for home page nav visibility
     function updateBodyClass(targetId) {
         if (targetId === 'home') {

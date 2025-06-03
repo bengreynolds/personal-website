@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome - Ben Reynolds</title>
+    <style>
+        :root {
+            --primary: #2a5298;
+            --accent: #1e3c72;
+            --background: #f7fafd;
+            --surface: #fff;
+            --text: #222;
+        }
+        
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            width: 100%;
+            overflow: hidden;
+            font-family: 'Roboto', 'Segoe UI', Arial, sans-serif;
+            background: var(--background);
+        }
+        
+        .welcome-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #f7fafd 0%, #e0e6f7 100%);
+        }
+        
+        .animation-container {
+            position: relative;
+            width: 100%;
+            height: 70%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .box-rotation-path {
+            position: relative;
+            width: 300px;
+            height: 300px;
+        }
+        
+        .box {
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            background-color: rgba(42, 82, 152, 0.9);
+            border: 2px solid white;
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-weight: bold;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+            cursor: pointer;
+            transition: transform 0.3s, background-color 0.3s;
+            font-size: 14px;
+            text-align: center;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+        
+        .box:hover {
+            background-color: var(--accent);
+            transform: scale(1.1);
+        }
+        
+        .welcome-title {
+            font-size: 2.5rem;
+            color: var(--primary);
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+        
+        .enter-site-btn {
+            margin-top: 2rem;
+            padding: 12px 30px;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 24px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(42, 82, 152, 0.2);
+            transition: background-color 0.3s, transform 0.3s;
+        }
+        
+        .enter-site-btn:hover {
+            background-color: var(--accent);
+            transform: scale(1.05);
+        }
+        
+        @keyframes rotateInPlane {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="welcome-container">
+        <h1 class="welcome-title">Welcome to Ben Reynolds' Portfolio</h1>
+        
+        <div class="animation-container">
+            <div id="box-rotation-path" class="box-rotation-path"></div>
+        </div>
+        
+        <button id="enter-site-btn" class="enter-site-btn">Enter Site</button>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const navItems = [
+                { target: 'home', label: 'Home' },
+                { target: 'about', label: 'Overview' },
+                { target: 'timeline', label: 'Experience & Skills' },
+                { target: 'projects', label: 'Selected Projects' },
+                { target: 'contact', label: 'Contact' }
+            ];
+            
+            const rotationPath = document.getElementById('box-rotation-path');
+            
+            // Apply rotation animation to the path
+            rotationPath.style.animation = 'rotateInPlane 20s linear infinite';
+            
+            // Create boxes and position them in a circle
+            navItems.forEach((item, index) => {
+                const box = document.createElement('div');
+                box.className = 'box';
+                box.dataset.target = item.target;
+                box.textContent = item.label;
+                
+                // Position boxes in a circle (in plane with the screen)
+                const angle = (index / navItems.length) * 2 * Math.PI;
+                const radius = 150; // Circle radius
+                
+                // Calculate position on the circle
+                const x = radius * Math.cos(angle);
+                const y = radius * Math.sin(angle);
+                
+                box.style.left = `${x + 150 - 50}px`; // Center in the container (150px) - half box width (50px)
+                box.style.top = `${y + 150 - 50}px`;  // Center in the container (150px) - half box height (50px)
+                
+                // Add click event
+                box.addEventListener('click', function() {
+                    localStorage.setItem('targetSection', item.target);
+                    window.location.href = 'index.html';
+                });
+                
+                rotationPath.appendChild(box);
+            });
+            
+            // Enter site button
+            document.getElementById('enter-site-btn').addEventListener('click', function() {
+                window.location.href = 'index.html';
+            });
+        });
+    </script>
+</body>
+</html>

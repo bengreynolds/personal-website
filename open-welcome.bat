@@ -1,0 +1,3 @@
+@echo off
+echo Opening Ben Reynolds' Portfolio...
+start "" "file:///%~dp0ben-reynolds-profile/public/welcome.html"
