@@ -162,9 +162,9 @@
                 particleMinDistance: 20, // Minimum distance between particles
                 orbitColor: "rgba(0, 162, 255, 0.8)", // Neon blue color for orbiting particles
                 orbitLineColor: "rgba(0, 162, 255, 0.4)", // Neon blue for orbit lines
-                transitionDuration: 100, // Duration of button transition animation in ms (0.5x faster)
+                transitionDuration: 900, // Increased transition duration by 500ms (from 400ms to 900ms)
                 vibrationIntensity: 3, // Maximum vibration offset in pixels
-                explosionDuration: 500 // Duration of explosion animation in ms
+                explosionDuration: 1000 // Increased explosion duration by 500ms (from 500ms to 1000ms)
             };
             
             // Create navigation nodes as part of the welcome container
@@ -488,33 +488,46 @@
                         y: (Math.random() - 0.5) * 0.3
                     };
                     this.absorbed = false;
+                    this.flying = false; // New property to control flying state
                 }
                 
                 update(mouseX, mouseY) {
-                    if (isTransitioning && selectedNode && !this.absorbed) {
-                        // Calculate distance to selected node
-                        const dx = selectedNode.x - this.x;
-                        const dy = selectedNode.y - this.y;
-                        const distance = Math.sqrt(dx * dx + dy * dy);
+                    if (isTransitioning && !this.flying && !this.absorbed) {
+                        // Instead of being absorbed, particles fly outward away from the center
+                        const dx = this.x - selectedNode.x;
+                        const dy = this.y - selectedNode.y;
                         
-                        // Transition progress (0 to 1)
-                        const elapsed = Date.now() - transitionStartTime;
-                        const progress = Math.min(1, elapsed / config.transitionDuration);
+                        // Calculate angle from center to particle
+                        const angle = Math.atan2(dy, dx);
                         
-                        // Gradually increase attraction force over time
-                        const attractionForce = 0.02 * progress; // Increased for faster movement
+                        // Set velocity to fly outward
+                        const speed = 3 + Math.random() * 3; // Random speed for variety
+                        this.flying = true;
+                        this.velocity = {
+                            x: Math.cos(angle) * speed,
+                            y: Math.sin(angle) * speed
+                        };
                         
-                        // Apply attraction to selected node
-                        this.x += dx * attractionForce;
-                        this.y += dy * attractionForce;
+                        return;
+                    }
+                    
+                    if (this.flying) {
+                        // Move particle outward with increasing speed
+                        this.velocity.x *= 1.01; // Slight acceleration
+                        this.velocity.y *= 1.01;
+                        this.x += this.velocity.x;
+                        this.y += this.velocity.y;
                         
-                        // Check if particle has been absorbed
-                        if (distance < selectedNode.radius) {
-                            this.absorbed = true;
+                        // Check if particle has left the screen
+                        if (this.x < -50 || this.x > canvas.width + 50 || 
+                            this.y < -50 || this.y > canvas.height + 50) {
+                            this.absorbed = true; // Mark as absorbed once off-screen
                             absorbedParticles++;
                             
-                            // Add new orbiting particles as regular particles are absorbed
-                            addOrbitingParticleToSelectedNode();
+                            // Add new orbiting particles as regular particles fly off
+                            if (absorbedParticles % 15 === 0) { // Add less frequently
+                                addOrbitingParticleToSelectedNode();
+                            }
                             
                             // If all particles absorbed, trigger explosion
                             if (absorbedParticles >= totalParticles && !explosionStarted) {
@@ -605,6 +618,46 @@
             
             // Draw all connections between particles within range
             function drawWebConnections() {
+                // Don't draw connections between particles if transitioning (web shattered)
+                if (isTransitioning) {
+                    // Only draw connections between the selected node and nearby particles that haven't started flying yet
+                    particles.forEach(particle => {
+                        if (particle.absorbed || particle.flying) return;
+                        
+                        const dx = particle.x - selectedNode.x;
+                        const dy = particle.y - selectedNode.y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        
+                        if (distance < connectionDistance) {
+                            // Create a "shattering" effect with short, fading line segments
+                            const segments = 3; // Number of segments for the breaking connection
+                            
+                            for (let i = 0; i < segments; i++) {
+                                const startPoint = i / segments;
+                                const endPoint = (i + 0.7) / segments; // Gaps between segments
+                                
+                                const startX = particle.x + dx * startPoint;
+                                const startY = particle.y + dy * startPoint;
+                                const endX = particle.x + dx * endPoint;
+                                const endY = particle.y + dy * endPoint;
+                                
+                                ctx.beginPath();
+                                ctx.moveTo(startX, startY);
+                                ctx.lineTo(endX, endY);
+                                
+                                // Fade the line segments
+                                const opacity = 0.2 * (1 - distance / connectionDistance) * (1 - startPoint);
+                                ctx.strokeStyle = `rgba(255, 255, 255, ${opacity})`;
+                                ctx.lineWidth = 0.5;
+                                ctx.stroke();
+                            }
+                        }
+                    });
+                    
+                    return; // Don't draw other connections during transition
+                }
+                
+                // Regular web connections when not transitioning
                 // Draw connections between particles
                 for (let i = 0; i < particles.length; i++) {
                     if (particles[i].absorbed) continue;
@@ -634,9 +687,6 @@
                     if (particle.absorbed) return;
                     
                     navNodes.forEach(navNode => {
-                        // Skip if we're transitioning and this isn't the selected node
-                        if (isTransitioning && navNode !== selectedNode) return;
-                        
                         const dx = particle.x - navNode.x;
                         const dy = particle.y - navNode.y;
                         const distance = Math.sqrt(dx * dx + dy * dy);
@@ -654,23 +704,21 @@
                     });
                 });
                 
-                // Only draw connections between nav nodes if not transitioning
-                if (!isTransitioning) {
-                    for (let i = 0; i < navNodes.length; i++) {
-                        for (let j = i + 1; j < navNodes.length; j++) {
-                            const dx = navNodes[i].x - navNodes[j].x;
-                            const dy = navNodes[i].y - navNodes[j].y;
-                            
-                            // Always connect nav nodes regardless of distance
-                            const opacity = 0.4;
-                            
-                            ctx.beginPath();
-                            ctx.moveTo(navNodes[i].x, navNodes[i].y);
-                            ctx.lineTo(navNodes[j].x, navNodes[j].y);
-                            ctx.strokeStyle = `rgba(255, 255, 255, ${opacity})`;
-                            ctx.lineWidth = 1.0;
-                            ctx.stroke();
-                        }
+                // Draw connections between nav nodes
+                for (let i = 0; i < navNodes.length; i++) {
+                    for (let j = i + 1; j < navNodes.length; j++) {
+                        const dx = navNodes[i].x - navNodes[j].x;
+                        const dy = navNodes[i].y - navNodes[j].y;
+                        
+                        // Always connect nav nodes regardless of distance
+                        const opacity = 0.4;
+                        
+                        ctx.beginPath();
+                        ctx.moveTo(navNodes[i].x, navNodes[i].y);
+                        ctx.lineTo(navNodes[j].x, navNodes[j].y);
+                        ctx.strokeStyle = `rgba(255, 255, 255, ${opacity})`;
+                        ctx.lineWidth = 1.0;
+                        ctx.stroke();
                     }
                 }
             }
