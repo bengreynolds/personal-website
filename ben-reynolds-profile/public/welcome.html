@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Welcome - Ben Reynolds</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
             --primary: #2a5298;
@@ -19,7 +22,7 @@
             height: 100%;
             width: 100%;
             overflow: hidden;
-            font-family: 'Roboto', 'Segoe UI', Arial, sans-serif;
+            font-family: 'Poppins', 'Segoe UI', Arial, sans-serif;
             background: var(--background);
             color: var(--text-light);
         }
@@ -60,7 +63,7 @@
             justify-content: center;
             align-items: center;
             color: white;
-            font-weight: bold;
+            font-weight: 600;
             box-shadow: 0 0 10px rgba(255, 255, 255, 0.5), 
                         0 0 20px rgba(255, 255, 255, 0.3), 
                         0 0 30px rgba(255, 255, 255, 0.1);
@@ -73,6 +76,7 @@
             backdrop-filter: blur(3px);
             z-index: 5;
             pointer-events: auto; /* Make nav nodes clickable */
+            letter-spacing: 0.5px;
         }
         
         .nav-node:hover {
@@ -162,13 +166,22 @@
                 particleMinDistance: 20, // Minimum distance between particles
                 orbitColor: "rgba(0, 162, 255, 0.8)", // Neon blue color for orbiting particles
                 orbitLineColor: "rgba(0, 162, 255, 0.4)", // Neon blue for orbit lines
-                transitionDuration: 10000, // Increased transition duration by 500ms (from 400ms to 900ms)
+                transitionDuration: 1000, // Increased transition duration by 500ms (from 400ms to 900ms)
                 vibrationIntensity: 3, // Maximum vibration offset in pixels
-                explosionDuration: 10000 // Increased explosion duration by 500ms (from 500ms to 1000ms)
+                explosionDuration: 1000 // Increased explosion duration by 500ms (from 500ms to 1000ms)
             };
             
             // Create navigation nodes as part of the welcome container
             const navNodes = [];
+            
+            // Define different neon colors for each nav node
+            const neonColors = [
+                { fill: "rgba(0, 217, 255, 0.8)", line: "rgba(0, 217, 255, 0.4)" },   // Neon cyan
+                { fill: "rgba(255, 0, 230, 0.8)", line: "rgba(255, 0, 230, 0.4)" },   // Neon pink
+                { fill: "rgba(124, 255, 0, 0.8)", line: "rgba(124, 255, 0, 0.4)" },   // Neon green
+                { fill: "rgba(255, 136, 0, 0.8)", line: "rgba(255, 136, 0, 0.4)" },   // Neon orange
+                { fill: "rgba(255, 234, 0, 0.8)", line: "rgba(255, 234, 0, 0.4)" }    // Neon yellow
+            ];
             
             function createNavNodes() {
                 // Clear any existing nav nodes
@@ -178,52 +191,24 @@
                 
                 navNodes.length = 0; // Clear array
                 
-                // Calculate usable screen area with margins
-                const marginX = window.innerWidth * config.screenMargin;
-                const marginY = window.innerHeight * config.screenMargin;
-                const usableWidth = window.innerWidth - (marginX * 2);
-                const usableHeight = window.innerHeight - (marginY * 2);
+                // Calculate screen dimensions for positioning
+                const centerX = window.innerWidth / 2;
+                const centerY = window.innerHeight / 2;
+                const marginX = window.innerWidth * 0.15; // 15% margin from screen edges
+                const marginY = window.innerHeight * 0.15; // 15% margin from screen edges
                 
-                // Generate random positions for nodes with minimum spacing
-                const positions = [];
+                // Fixed positions for each nav node
+                const positions = [
+                    { x: centerX, y: centerY }, // Home (center)
+                    { x: marginX, y: marginY }, // Overview (top left)
+                    { x: window.innerWidth - marginX, y: marginY }, // Experience & Skills (top right)
+                    { x: marginX, y: window.innerHeight - marginY }, // Selected Projects (bottom left)
+                    { x: window.innerWidth - marginX, y: window.innerHeight - marginY } // Contact (bottom right)
+                ];
+                
                 const nodeSize = 90; // Size of nav nodes
                 
-                // Try to place each node with minimum spacing
-                for (let i = 0; i < navItems.length; i++) {
-                    let validPosition = false;
-                    let attempts = 0;
-                    let x, y;
-                    
-                    // Try up to 100 times to find a valid position
-                    while (!validPosition && attempts < 100) {
-                        // Generate random position within usable area
-                        x = marginX + Math.random() * usableWidth;
-                        y = marginY + Math.random() * usableHeight;
-                        
-                        // Check distance from all existing nodes
-                        validPosition = true;
-                        for (let j = 0; j < positions.length; j++) {
-                            const dx = x - positions[j].x;
-                            const dy = y - positions[j].y;
-                            const distance = Math.sqrt(dx * dx + dy * dy);
-                            
-                            if (distance < config.minNodeSpacing) {
-                                validPosition = false;
-                                break;
-                            }
-                        }
-                        
-                        attempts++;
-                    }
-                    
-                    // If we couldn't find a valid position after max attempts,
-                    // just use the last attempted position
-                    positions.push({ x, y });
-                }
-                
-                console.log("Creating nav nodes at positions:", positions);
-                
-                // Create the nav nodes with the calculated positions
+                // Create the nav nodes with fixed positions
                 navItems.forEach((item, index) => {
                     // Create HTML element for nav node
                     const node = document.createElement('div');
@@ -255,7 +240,8 @@
                         y: positions[index].y, // Center point of node
                         radius: nodeSize / 2,
                         target: item.target,
-                        orbitingParticles: createOrbitingParticles(positions[index].x, positions[index].y)
+                        orbitingParticles: createOrbitingParticles(positions[index].x, positions[index].y),
+                        color: neonColors[index % neonColors.length] // Assign color from neonColors array with modulo for safety
                     });
                 });
             }
@@ -302,44 +288,24 @@
             
             // Update nav node positions on window resize
             function positionNavNodes() {
-                // Calculate usable screen area with margins
-                const marginX = window.innerWidth * config.screenMargin;
-                const marginY = window.innerHeight * config.screenMargin;
-                const usableWidth = window.innerWidth - (marginX * 2);
-                const usableHeight = window.innerHeight - (marginY * 2);
+                // Calculate screen dimensions for positioning
+                const centerX = window.innerWidth / 2;
+                const centerY = window.innerHeight / 2;
+                const marginX = window.innerWidth * 0.15; // 15% margin from screen edges
+                const marginY = window.innerHeight * 0.15; // 15% margin from screen edges
                 
-                // Generate new random positions
-                const positions = [];
+                // Fixed positions for each node
+                const positions = [
+                    { x: centerX, y: centerY }, // Home (center)
+                    { x: marginX, y: marginY }, // Overview (top left)
+                    { x: window.innerWidth - marginX, y: marginY }, // Experience & Skills (top right)
+                    { x: marginX, y: window.innerHeight - marginY }, // Selected Projects (bottom left)
+                    { x: window.innerWidth - marginX, y: window.innerHeight - marginY } // Contact (bottom right)
+                ];
+                
                 const nodeSize = 90;
                 
-                for (let i = 0; i < navNodes.length; i++) {
-                    let validPosition = false;
-                    let attempts = 0;
-                    let x, y;
-                    
-                    while (!validPosition && attempts < 100) {
-                        x = marginX + Math.random() * usableWidth;
-                        y = marginY + Math.random() * usableHeight;
-                        
-                        validPosition = true;
-                        for (let j = 0; j < positions.length; j++) {
-                            const dx = x - positions[j].x;
-                            const dy = y - positions[j].y;
-                            const distance = Math.sqrt(dx * dx + dy * dy);
-                            
-                            if (distance < config.minNodeSpacing) {
-                                validPosition = false;
-                                break;
-                            }
-                        }
-                        
-                        attempts++;
-                    }
-                    
-                    positions.push({ x, y });
-                }
-                
-                // Update node positions
+                // Update node positions to fixed locations
                 navNodes.forEach((node, index) => {
                     const nodeX = positions[index].x - (nodeSize / 2);
                     const nodeY = positions[index].y - (nodeSize / 2);
@@ -380,7 +346,7 @@
                             if (navNode.element.parentNode) {
                                 navNode.element.parentNode.removeChild(navNode.element);
                             }
-                        }, 10000);
+                        }, 0);
                     }
                 });
                 
@@ -404,7 +370,7 @@
                         particle.opacity = 1;
                         particle.speed *= 2; // Make them orbit faster
                     });
-                }, 10000); // Reduced from 800ms to match faster transition
+                },5); // Reduced from 800ms to match faster transition
             }
             
             // Function to start node vibration
@@ -461,14 +427,14 @@
                         
                         // Hide selected node
                         if (selectedNode.element && selectedNode.element.parentNode) {
-                            selectedNode.element.style.transition = 'opacity 0.2s ease-out';
+                            selectedNode.element.style.transition = 'opacity 0.9s ease-out';
                             selectedNode.element.style.opacity = '0';
                             
                             setTimeout(() => {
                                 // Navigate to the target page
                                 localStorage.setItem('targetSection', selectedNode.target);
                                 window.location.href = 'index.html';
-                            }, 10000);
+                            }, 500);
                         }
                     }
                 }, 1000 / 60);
@@ -764,17 +730,17 @@
                         const x = navNode.x + Math.cos(orbitParticle.angle) * orbitParticle.radius;
                         const y = navNode.y + Math.sin(orbitParticle.angle) * orbitParticle.radius;
                         
-                        // Draw orbiting particle with neon blue color
+                        // Draw orbiting particle with the node's assigned neon color
                         ctx.beginPath();
                         ctx.arc(x, y, orbitParticle.size, 0, Math.PI * 2);
-                        ctx.fillStyle = config.orbitColor;
+                        ctx.fillStyle = navNode.color.fill;
                         ctx.fill();
                         
-                        // Draw thin line connecting to nav node center with neon blue color
+                        // Draw thin line connecting to nav node center with the node's assigned neon color
                         ctx.beginPath();
                         ctx.moveTo(navNode.x, navNode.y);
                         ctx.lineTo(x, y);
-                        ctx.strokeStyle = config.orbitLineColor;
+                        ctx.strokeStyle = navNode.color.line;
                         ctx.lineWidth = 0.5;
                         ctx.stroke();
                     });
