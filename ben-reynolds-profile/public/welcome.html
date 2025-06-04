@@ -62,14 +62,14 @@
             position: relative;
             width: 300px;
             height: 300px;
-            animation: rotateInPlane 20s linear infinite;
+            animation: rotateInPlane 40s linear infinite; /* Slowed down from 20s to 40s */
         }
         
         .box {
             position: absolute;
             width: 100px;
             height: 100px;
-            background-color: rgba(42, 82, 152, 0.85);
+            background-color: rgba(50, 55, 65, 0.85); /* Changed to a nice contrasting grey */
             border: 2px solid rgba(255, 255, 255, 0.8);
             border-radius: 8px;
             display: flex;
@@ -89,7 +89,7 @@
             box-sizing: border-box;
             backdrop-filter: blur(3px);
             /* Add counter-rotation to keep boxes upright */
-            animation: counterRotate 20s linear infinite;
+            animation: counterRotate 40s linear infinite;
         }
         
         /* Add counter-rotation animation to keep boxes upright */
@@ -103,9 +103,9 @@
         }
         
         .box:hover {
-            background-color: var(--accent);
-            animation: none; /* Stop the counter-rotation on hover */
-            transform: scale(1.1); /* Don't include rotation in hover state */
+            background-color: rgba(70, 75, 85, 0.95); /* Darker grey on hover for better contrast */
+            animation: none; /* Stop the counter-rotation animation on hover */
+            transform: scale(1.1); /* Only scale without rotation */
             box-shadow: 0 0 25px rgba(255, 255, 255, 0.9), 
                         0 0 50px rgba(255, 255, 255, 0.6), 
                         0 0 75px rgba(255, 255, 255, 0.3),
@@ -227,8 +227,16 @@
 
         function createConstellationBackground() {
             const starsContainer = document.getElementById('stars-container');
-            const numberOfNodes = 150; // Increased number of nodes
+            const numberOfNodes = 300; // Significantly increased number of nodes from 150 to 300
             const nodes = [];
+            let mouseX = window.innerWidth / 2;
+            let mouseY = window.innerHeight / 2;
+            
+            // Track mouse position
+            document.addEventListener('mousemove', function(event) {
+                mouseX = event.clientX;
+                mouseY = event.clientY;
+            });
             
             // Create stars/dots
             for (let i = 0; i < numberOfNodes; i++) {
@@ -251,7 +259,7 @@
                 node.style.opacity = 0.2 + Math.random() * 0.8;
                 
                 // Add subtle animation to some nodes
-                if (Math.random() > 0.6) { // Increased probability of pulsing
+                if (Math.random() > 0.6) {
                     node.style.animation = `pulse ${3 + Math.random() * 7}s infinite`;
                 }
                 
@@ -259,15 +267,19 @@
                 nodes.push({
                     element: node,
                     x: x,
-                    y: y
+                    y: y,
+                    originalX: x, // Store original position for movement calculations
+                    originalY: y,
+                    size: size,
+                    speed: 0.5 + Math.random() * 1.5 // Variable speed for smoother animation
                 });
             }
             
             // Create connecting lines between nodes (web-like pattern)
             createWebConnections(nodes, starsContainer);
             
-            // Add movement to the constellation
-            animateConstellation(nodes);
+            // Add movement to the constellation with mouse interaction
+            animateConstellation(nodes, mouseX, mouseY);
         }
         
         function createWebConnections(nodes, container) {
@@ -288,9 +300,9 @@
                             distance: Math.sqrt(dx * dx + dy * dy)
                         };
                     })
-                    .filter(item => item.distance < 250) // Increased connection distance
+                    .filter(item => item.distance < 200) // Adjusted connection distance
                     .sort((a, b) => a.distance - b.distance)
-                    .slice(0, 3); // Connect to more nearby nodes (up to 3)
+                    .slice(0, 4); // Connect to more nearby nodes (up to 4)
                 
                 // Create connections with varying opacity based on distance
                 nearbyNodes.forEach(nodeInfo => {
@@ -321,39 +333,57 @@
             return line;
         }
         
-        function animateConstellation(nodes) {
+        function animateConstellation(nodes, mouseX, mouseY) {
             const starsContainer = document.getElementById('stars-container');
             
-            // Animate nodes slightly
+            // Get current mouse position
+            const currentMouseX = mouseX;
+            const currentMouseY = mouseY;
+            
+            // Animate nodes with mouse interaction
             nodes.forEach(node => {
-                if (Math.random() > 0.9) { // Only move some nodes each frame for a subtle effect
-                    const moveAmount = (Math.random() - 0.5) * 1.5; // Slightly faster movement
-                    node.x += moveAmount;
-                    node.y += moveAmount;
-                    
-                    // Keep within bounds
-                    node.x = Math.max(0, Math.min(window.innerWidth, node.x));
-                    node.y = Math.max(0, Math.min(window.innerHeight, node.y));
-                    
-                    node.element.style.left = `${node.x}px`;
-                    node.element.style.top = `${node.y}px`;
+                // Calculate distance from mouse
+                const dx = currentMouseX - node.originalX;
+                const dy = currentMouseY - node.originalY;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                const maxDistance = 300; // Maximum distance for mouse influence
+                
+                // Calculate influence factor (closer = stronger effect)
+                let influence = 0;
+                if (distance < maxDistance) {
+                    influence = (1 - distance / maxDistance) * 0.2; // Max 20% influence
                 }
+                
+                // Apply mouse attraction effect
+                if (distance < maxDistance) {
+                    // Move towards mouse position with easing
+                    node.x += (node.originalX + dx * influence - node.x) * 0.03;
+                    node.y += (node.originalY + dy * influence - node.y) * 0.03;
+                } else {
+                    // Return to original position with slight random movement
+                    node.x += (node.originalX - node.x) * 0.02 + (Math.random() - 0.5) * 0.3;
+                    node.y += (node.originalY - node.y) * 0.02 + (Math.random() - 0.5) * 0.3;
+                }
+                
+                // Update position
+                node.element.style.left = `${node.x}px`;
+                node.element.style.top = `${node.y}px`;
             });
             
-            // Recreate web connections periodically
-            if (Math.random() > 0.95) { // Only update connections occasionally
+            // Recreate web connections every few frames for better performance
+            if (Math.random() > 0.97) {
                 createWebConnections(nodes, starsContainer);
             }
             
             // Continue animation
-            requestAnimationFrame(() => animateConstellation(nodes));
+            requestAnimationFrame(() => animateConstellation(nodes, currentMouseX, currentMouseY));
         }
 
         function setupRotatingBoxes(navItems) {
             const rotationPath = document.getElementById('box-rotation-path');
             
             // Apply rotation animation to the path
-            rotationPath.style.animation = 'rotateInPlane 20s linear infinite';
+            rotationPath.style.animation = 'rotateInPlane 40s linear infinite';
             
             // Create boxes and position them in a circle
             navItems.forEach((item, index) => {
