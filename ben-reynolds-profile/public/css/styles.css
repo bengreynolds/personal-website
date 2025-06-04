@@ -27,9 +27,12 @@ body {
     display: flex;
     flex-direction: column;
     padding-bottom: 80px; /* Adds space at the bottom to prevent content from being hidden behind footer */
+    position: relative;
 }
 
 header {
+    position: relative;
+    z-index: 2;
     background: linear-gradient(90deg, var(--primary) 0%, var(--accent) 100%);
     color: #fff;
     box-shadow: var(--shadow);
@@ -61,6 +64,8 @@ header {
 }
 
 nav {
+    position: relative;
+    z-index: 2;
     display: flex;
     justify-content: center;
     gap: 2rem;
@@ -86,6 +91,8 @@ nav a:hover, nav a.active {
 }
 
 .search-bar {
+    position: relative;
+    z-index: 2;
     display: flex;
     justify-content: center;
     margin: 1.5rem 0 0 0;
@@ -97,6 +104,7 @@ nav a:hover, nav a.active {
     border: none;
     box-shadow: 0 2px 8px rgba(42,82,152,0.08);
     font-size: 1rem;
+    background-color: #fff;
 }
 
 main {
@@ -110,6 +118,8 @@ section {
     box-shadow: var(--shadow);
     margin-bottom: 2.5rem;
     padding: 2.5rem 2rem;
+    position: relative;
+    z-index: 1;
 }
 
 .about-section {
@@ -119,6 +129,8 @@ section {
 }
 .about-section .about-text {
     flex: 2;
+    background-color: #fff;
+    backdrop-filter: none;
 }
 .about-section .about-image {
     flex: 1;
@@ -143,6 +155,8 @@ section {
     display: flex;
     flex-direction: column;
     gap: 2rem;
+    position: relative;
+    z-index: 1;
 }
 .timeline-item {
     display: flex;
@@ -153,6 +167,7 @@ section {
     box-shadow: 0 2px 8px rgba(42,82,152,0.04);
     padding: 1.5rem;
     transition: box-shadow 0.2s;
+    background-color: #f2f6fc;
 }
 .timeline-item:hover {
     box-shadow: 0 6px 24px rgba(42,82,152,0.12);
@@ -204,7 +219,7 @@ footer {
     bottom: 0;
     left: 0;
     width: 100%;
-    z-index: 9999; /* Increased z-index to ensure it's on top of everything */
+    z-index: 2;
     background: var(--surface);
     box-shadow: 0 -2px 12px rgba(42, 82, 152, 0.1);
     border-top: 1px solid rgba(42, 82, 152, 0.15);
@@ -755,4 +770,101 @@ main > section:not(#home) {
 
 .profile-header {
     margin-bottom: 1.2rem;
+}
+
+/* --- Additional Styles for Particle Background --- */
+.particle-background-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    pointer-events: none; /* Let clicks pass through to content */
+}
+
+/* Ensure section content is positioned above the canvas */
+section {
+    position: relative;
+    overflow: hidden; /* Keep particles inside the section */
+    min-height: 300px; /* Ensure enough height for particles to be visible */
+}
+
+section > *:not(.particle-background-canvas) {
+    position: relative;
+    z-index: 1;
+}
+
+/* Ensure about-text is properly positioned above the particle background */
+.about-text {
+    position: relative;
+    z-index: 1;
+    background-color: rgba(255, 255, 255, 0.8); /* Semi-transparent background */
+    border-radius: 12px;
+    padding: 1.5rem;
+    backdrop-filter: blur(5px); /* Add a slight blur effect */
+    box-shadow: 0 4px 24px rgba(42, 82, 152, 0.1);
+}
+
+/* Timeline specific adjustments */
+.timeline-container {
+    position: relative;
+    z-index: 1;
+}
+
+.timeline-item {
+    background-color: rgba(242, 246, 252, 0.9); /* Semi-transparent background */
+    backdrop-filter: blur(5px);
+}
+
+/* Footer adjustments to ensure it's above the particle background */
+footer {
+    z-index: 10;
+}
+
+/* --- Page Gradient Consistency with particles --- */
+.page-gradient-home,
+.page-gradient-about,
+.page-gradient-timeline,
+.page-gradient-projects,
+.page-gradient-contact {
+    background: linear-gradient(135deg, rgba(247, 250, 253, 0.7) 0%, rgba(255, 255, 255, 0.9) 100%);
+}
+
+/* --- Full Page Particle Background --- */
+.full-page-particle-bg {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1; /* Below all content */
+    pointer-events: none; /* Let clicks pass through to content */
+}
+
+/* Ensure main content has proper positioning for background */
+#main-content {
+    position: relative;
+}
+
+/* Make foreground panels solid (not translucent) */
+.about-text, 
+section, 
+.timeline-item {
+    background-color: #fff;
+    backdrop-filter: none;
+}
+
+section {
+    position: relative;
+    z-index: 1;
+}
+
+/* Remove any transparency from gradient backgrounds */
+.page-gradient-home,
+.page-gradient-about,
+.page-gradient-timeline,
+.page-gradient-projects,
+.page-gradient-contact {
+    background: linear-gradient(135deg, #f7fafd 0%, #ffffff 100%);
 }

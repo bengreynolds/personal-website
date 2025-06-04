@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="css/styles.css">
     <script src="js/main.js" defer></script>
     <script src="js/boxVisualization.js" defer></script>
+    <script src="js/particleBackground.js" defer></script>
     <style>
         /* Inline styles for the compact header */
         .profile-header {
@@ -42,6 +43,36 @@
         }
         #bouncy-ball-canvas {
             min-height: 120px !important;
+        }
+        
+        /* Particle background canvas styling */
+        .full-page-particle-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none; /* Let clicks pass through to content */
+        }
+        
+        /* Remove styles that are now in styles.css or no longer needed */
+        .particle-background-canvas {
+            display: none; /* Hide old canvas elements */
+        }
+        
+        /* Ensure all content sections use solid backgrounds */
+        section {
+            background-color: #fff !important;
+        }
+        
+        .timeline-item {
+            background-color: #f2f6fc !important;
+        }
+        
+        .about-text {
+            background-color: #fff !important;
+            backdrop-filter: none !important;
         }
         
         @media (max-width: 600px) {
