@@ -24,14 +24,19 @@
             color: var(--text-light);
         }
         
-        #stars-container {
+        #canvas-container {
             position: fixed;
-            width: 100%;
-            height: 100%;
             top: 0;
             left: 0;
+            width: 100%;
+            height: 100%;
             z-index: 0;
-            pointer-events: none; /* Ensure it doesn't block interaction with other elements */
+        }
+        
+        #stars-canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
         }
         
         .welcome-container {
@@ -44,7 +49,7 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            background: transparent; /* Changed from black to transparent to show constellation */
+            background: transparent;
             z-index: 1;
         }
         
@@ -62,14 +67,14 @@
             position: relative;
             width: 300px;
             height: 300px;
-            animation: rotateInPlane 40s linear infinite; /* Slowed down from 20s to 40s */
+            animation: rotateInPlane 40s linear infinite;
         }
         
         .box {
             position: absolute;
             width: 100px;
             height: 100px;
-            background-color: rgba(50, 55, 65, 0.85); /* Changed to a nice contrasting grey */
+            background-color: rgba(50, 55, 65, 0.85);
             border: 2px solid rgba(255, 255, 255, 0.8);
             border-radius: 8px;
             display: flex;
@@ -88,11 +93,9 @@
             padding: 10px;
             box-sizing: border-box;
             backdrop-filter: blur(3px);
-            /* Add counter-rotation to keep boxes upright */
             animation: counterRotate 40s linear infinite;
         }
         
-        /* Add counter-rotation animation to keep boxes upright */
         @keyframes counterRotate {
             0% {
                 transform: rotate(0deg);
@@ -103,9 +106,9 @@
         }
         
         .box:hover {
-            background-color: rgba(70, 75, 85, 0.95); /* Darker grey on hover for better contrast */
-            animation: none; /* Stop the counter-rotation animation on hover */
-            transform: scale(1.1); /* Only scale without rotation */
+            background-color: rgba(70, 75, 85, 0.95);
+            animation: none;
+            transform: scale(1.1);
             box-shadow: 0 0 25px rgba(255, 255, 255, 0.9), 
                         0 0 50px rgba(255, 255, 255, 0.6), 
                         0 0 75px rgba(255, 255, 255, 0.3),
@@ -146,24 +149,6 @@
                         0 0 75px rgba(255, 255, 255, 0.2);
         }
         
-        .constellation-node {
-            position: absolute;
-            width: 2px;
-            height: 2px;
-            background-color: white;
-            border-radius: 50%;
-            z-index: 1;
-            transition: opacity 0.5s;
-        }
-        
-        .constellation-line {
-            position: absolute;
-            background-color: rgba(255, 255, 255, 0.2);
-            transform-origin: 0% 50%;
-            z-index: 1;
-            transition: opacity 0.3s;
-        }
-        
         @keyframes rotateInPlane {
             0% {
                 transform: rotate(0deg);
@@ -172,25 +157,12 @@
                 transform: rotate(360deg);
             }
         }
-        
-        @keyframes pulse {
-            0% {
-                transform: scale(1);
-                opacity: 0.8;
-            }
-            50% {
-                transform: scale(1.2);
-                opacity: 1;
-            }
-            100% {
-                transform: scale(1);
-                opacity: 0.8;
-            }
-        }
     </style>
 </head>
 <body>
-    <div id="stars-container"></div>
+    <div id="canvas-container">
+        <canvas id="stars-canvas"></canvas>
+    </div>
     
     <div class="welcome-container">
         <h1 class="welcome-title">Welcome to Ben Reynolds' Portfolio</h1>
@@ -213,8 +185,8 @@
                 { target: 'contact', label: 'Contact' }
             ];
             
-            // Create constellation background
-            createConstellationBackground();
+            // Create canvas network animation
+            initNetworkAnimation();
             
             // Setup rotating boxes
             setupRotatingBoxes(navItems);
@@ -225,165 +197,168 @@
             });
         });
 
-        function createConstellationBackground() {
-            const starsContainer = document.getElementById('stars-container');
-            const numberOfNodes = 300; // Significantly increased number of nodes from 150 to 300
-            const nodes = [];
-            let mouseX = window.innerWidth / 2;
-            let mouseY = window.innerHeight / 2;
+        function initNetworkAnimation() {
+            const canvas = document.getElementById('stars-canvas');
+            const ctx = canvas.getContext('2d');
             
-            // Track mouse position
-            document.addEventListener('mousemove', function(event) {
-                mouseX = event.clientX;
-                mouseY = event.clientY;
-            });
+            // Set canvas size to match window
+            function resizeCanvas() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            }
             
-            // Create stars/dots
-            for (let i = 0; i < numberOfNodes; i++) {
-                const node = document.createElement('div');
-                node.className = 'constellation-node';
-                
-                // Random position
-                const x = Math.random() * window.innerWidth;
-                const y = Math.random() * window.innerHeight;
-                
-                node.style.left = `${x}px`;
-                node.style.top = `${y}px`;
-                
-                // Random size (some stars bigger than others)
-                const size = 1 + Math.random() * 3;
-                node.style.width = `${size}px`;
-                node.style.height = `${size}px`;
-                
-                // Random opacity
-                node.style.opacity = 0.2 + Math.random() * 0.8;
-                
-                // Add subtle animation to some nodes
-                if (Math.random() > 0.6) {
-                    node.style.animation = `pulse ${3 + Math.random() * 7}s infinite`;
+            // Call resize initially and on window resize
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+            
+            // Particle class for stars/nodes
+            class Particle {
+                constructor(x, y, size) {
+                    this.x = x;
+                    this.y = y;
+                    this.originalX = x;
+                    this.originalY = y;
+                    this.size = size;
+                    this.opacity = 0.2 + Math.random() * 0.5;
+                    this.connections = [];
+                    this.speed = {
+                        x: (Math.random() - 0.5) * 0.2,
+                        y: (Math.random() - 0.5) * 0.2
+                    };
                 }
                 
-                starsContainer.appendChild(node);
-                nodes.push({
-                    element: node,
-                    x: x,
-                    y: y,
-                    originalX: x, // Store original position for movement calculations
-                    originalY: y,
-                    size: size,
-                    speed: 0.5 + Math.random() * 1.5 // Variable speed for smoother animation
+                update(mouseX, mouseY) {
+                    // Natural movement
+                    this.x += this.speed.x;
+                    this.y += this.speed.y;
+                    
+                    // Boundary check with bounce effect
+                    if (this.x < 0 || this.x > canvas.width) {
+                        this.speed.x *= -1;
+                    }
+                    if (this.y < 0 || this.y > canvas.height) {
+                        this.speed.y *= -1;
+                    }
+                    
+                    // Mouse influence
+                    if (mouseX && mouseY) {
+                        const dx = mouseX - this.x;
+                        const dy = mouseY - this.y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        
+                        if (distance < 300) {
+                            // Calculate influence based on distance (closer = stronger)
+                            const force = (300 - distance) / 3000;
+                            
+                            // Apply attraction force towards mouse
+                            this.x += dx * force;
+                            this.y += dy * force;
+                        }
+                    }
+                }
+                
+                draw() {
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(255, 255, 255, ${this.opacity})`;
+                    ctx.fill();
+                }
+            }
+            
+            // Create particles
+            const particles = [];
+            const particleCount = 500; // Many more particles for a denser network
+            
+            for (let i = 0; i < particleCount; i++) {
+                const size = Math.random() * 2 + 1;
+                const x = Math.random() * canvas.width;
+                const y = Math.random() * canvas.height;
+                particles.push(new Particle(x, y, size));
+            }
+            
+            // Find connections between particles
+            function findConnections() {
+                particles.forEach(particle => {
+                    particle.connections = [];
+                    
+                    particles.forEach(otherParticle => {
+                        if (particle !== otherParticle) {
+                            const dx = particle.x - otherParticle.x;
+                            const dy = particle.y - otherParticle.y;
+                            const distance = Math.sqrt(dx * dx + dy * dy);
+                            
+                            if (distance < 100) { // Connection distance threshold
+                                particle.connections.push({
+                                    particle: otherParticle,
+                                    distance: distance
+                                });
+                            }
+                        }
+                    });
+                    
+                    // Limit connections to closest few
+                    particle.connections.sort((a, b) => a.distance - b.distance);
+                    particle.connections = particle.connections.slice(0, 3);
                 });
             }
             
-            // Create connecting lines between nodes (web-like pattern)
-            createWebConnections(nodes, starsContainer);
-            
-            // Add movement to the constellation with mouse interaction
-            animateConstellation(nodes, mouseX, mouseY);
-        }
-        
-        function createWebConnections(nodes, container) {
-            // Clear any existing lines
-            document.querySelectorAll('.constellation-line').forEach(line => line.remove());
-            
-            // Create a more interconnected web pattern
-            for (let i = 0; i < nodes.length; i++) {
-                // Find nearby nodes for connections
-                const nearbyNodes = nodes
-                    .filter((_, idx) => idx !== i)
-                    .map((node, index) => {
-                        const dx = nodes[i].x - node.x;
-                        const dy = nodes[i].y - node.y;
-                        return {
-                            index: index,
-                            node: node,
-                            distance: Math.sqrt(dx * dx + dy * dy)
-                        };
-                    })
-                    .filter(item => item.distance < 200) // Adjusted connection distance
-                    .sort((a, b) => a.distance - b.distance)
-                    .slice(0, 4); // Connect to more nearby nodes (up to 4)
-                
-                // Create connections with varying opacity based on distance
-                nearbyNodes.forEach(nodeInfo => {
-                    const opacity = Math.max(0.05, 0.3 - (nodeInfo.distance / 800));
-                    createLine(nodes[i], nodeInfo.node, container, opacity);
+            // Draw connections between particles
+            function drawConnections() {
+                particles.forEach(particle => {
+                    particle.connections.forEach(connection => {
+                        const opacity = Math.max(0.05, 0.3 - (connection.distance / 200));
+                        
+                        ctx.beginPath();
+                        ctx.moveTo(particle.x, particle.y);
+                        ctx.lineTo(connection.particle.x, connection.particle.y);
+                        ctx.strokeStyle = `rgba(255, 255, 255, ${opacity})`;
+                        ctx.lineWidth = 0.5;
+                        ctx.stroke();
+                    });
                 });
             }
-        }
-        
-        function createLine(node1, node2, container, opacity = 0.2) {
-            const line = document.createElement('div');
-            line.className = 'constellation-line';
             
-            // Calculate line position and dimensions
-            const dx = node2.x - node1.x;
-            const dy = node2.y - node1.y;
-            const length = Math.sqrt(dx * dx + dy * dy);
-            const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+            // Mouse tracking
+            let mouseX = null;
+            let mouseY = null;
             
-            line.style.width = `${length}px`;
-            line.style.height = '1px';
-            line.style.left = `${node1.x}px`;
-            line.style.top = `${node1.y}px`;
-            line.style.transform = `rotate(${angle}deg)`;
-            line.style.backgroundColor = `rgba(255, 255, 255, ${opacity})`;
-            
-            container.appendChild(line);
-            return line;
-        }
-        
-        function animateConstellation(nodes, mouseX, mouseY) {
-            const starsContainer = document.getElementById('stars-container');
-            
-            // Get current mouse position
-            const currentMouseX = mouseX;
-            const currentMouseY = mouseY;
-            
-            // Animate nodes with mouse interaction
-            nodes.forEach(node => {
-                // Calculate distance from mouse
-                const dx = currentMouseX - node.originalX;
-                const dy = currentMouseY - node.originalY;
-                const distance = Math.sqrt(dx * dx + dy * dy);
-                const maxDistance = 300; // Maximum distance for mouse influence
-                
-                // Calculate influence factor (closer = stronger effect)
-                let influence = 0;
-                if (distance < maxDistance) {
-                    influence = (1 - distance / maxDistance) * 0.2; // Max 20% influence
-                }
-                
-                // Apply mouse attraction effect
-                if (distance < maxDistance) {
-                    // Move towards mouse position with easing
-                    node.x += (node.originalX + dx * influence - node.x) * 0.03;
-                    node.y += (node.originalY + dy * influence - node.y) * 0.03;
-                } else {
-                    // Return to original position with slight random movement
-                    node.x += (node.originalX - node.x) * 0.02 + (Math.random() - 0.5) * 0.3;
-                    node.y += (node.originalY - node.y) * 0.02 + (Math.random() - 0.5) * 0.3;
-                }
-                
-                // Update position
-                node.element.style.left = `${node.x}px`;
-                node.element.style.top = `${node.y}px`;
+            canvas.addEventListener('mousemove', function(e) {
+                mouseX = e.clientX;
+                mouseY = e.clientY;
             });
             
-            // Recreate web connections every few frames for better performance
-            if (Math.random() > 0.97) {
-                createWebConnections(nodes, starsContainer);
+            canvas.addEventListener('mouseleave', function() {
+                mouseX = null;
+                mouseY = null;
+            });
+            
+            // Animation loop
+            function animate() {
+                // Clear canvas
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                // Update and draw particles
+                particles.forEach(particle => {
+                    particle.update(mouseX, mouseY);
+                    particle.draw();
+                });
+                
+                // Find and draw connections (not every frame for performance)
+                if (Math.random() > 0.95) {
+                    findConnections();
+                }
+                drawConnections();
+                
+                requestAnimationFrame(animate);
             }
             
-            // Continue animation
-            requestAnimationFrame(() => animateConstellation(nodes, currentMouseX, currentMouseY));
+            // Start animation
+            findConnections(); // Initial connections
+            animate();
         }
 
         function setupRotatingBoxes(navItems) {
             const rotationPath = document.getElementById('box-rotation-path');
-            
-            // Apply rotation animation to the path
-            rotationPath.style.animation = 'rotateInPlane 40s linear infinite';
             
             // Create boxes and position them in a circle
             navItems.forEach((item, index) => {
@@ -392,7 +367,7 @@
                 box.dataset.target = item.target;
                 box.textContent = item.label;
                 
-                // Position boxes in a circle (in plane with the screen)
+                // Position boxes in a circle
                 const angle = (index / navItems.length) * 2 * Math.PI;
                 const radius = 150; // Circle radius
                 
