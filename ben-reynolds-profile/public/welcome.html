@@ -82,10 +82,10 @@
             align-items: center;
             color: white;
             font-weight: bold;
-            box-shadow: 0 0 20px rgba(255, 255, 255, 0.7), 
-                        0 0 35px rgba(255, 255, 255, 0.4), 
-                        0 0 50px rgba(255, 255, 255, 0.2),
-                        0 0 65px rgba(255, 255, 255, 0.1);
+            /* Reduced glow intensity */
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.5), 
+                        0 0 20px rgba(255, 255, 255, 0.3), 
+                        0 0 30px rgba(255, 255, 255, 0.1);
             cursor: pointer;
             transition: transform 0.3s, background-color 0.3s, box-shadow 0.4s;
             font-size: 14px;
@@ -109,10 +109,10 @@
             background-color: rgba(70, 75, 85, 0.95);
             animation: none;
             transform: scale(1.1);
-            box-shadow: 0 0 25px rgba(255, 255, 255, 0.9), 
-                        0 0 50px rgba(255, 255, 255, 0.6), 
-                        0 0 75px rgba(255, 255, 255, 0.3),
-                        0 0 100px rgba(255, 255, 255, 0.1);
+            /* Reduced glow intensity on hover */
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.7), 
+                        0 0 30px rgba(255, 255, 255, 0.4), 
+                        0 0 45px rgba(255, 255, 255, 0.2);
         }
         
         .welcome-title {
@@ -164,14 +164,10 @@
         <canvas id="stars-canvas"></canvas>
     </div>
     
-    <div class="welcome-container">
-        <h1 class="welcome-title">Welcome to Ben Reynolds' Portfolio</h1>
-        
+    <div class="welcome-container">        
         <div class="animation-container">
             <div id="box-rotation-path" class="box-rotation-path"></div>
         </div>
-        
-        <button id="enter-site-btn" class="enter-site-btn">Enter Site</button>
     </div>
     
     <script>
@@ -190,11 +186,6 @@
             
             // Setup rotating boxes
             setupRotatingBoxes(navItems);
-            
-            // Enter site button
-            document.getElementById('enter-site-btn').addEventListener('click', function() {
-                window.location.href = 'index.html';
-            });
         });
 
         function initNetworkAnimation() {
