@@ -153,7 +153,12 @@
                 orbitingParticles: 20, // Number of orbiting particles per nav node
                 orbitRadius: 80, // Radius of orbit around nav nodes
                 orbitSpeed: 0.008, // Speed of orbiting particles
-                particleMinDistance: 100 // Minimum distance between particles
+                particleMinDistance: 20, // Minimum distance between particles
+                orbitColor: "rgba(0, 162, 255, 0.8)", // Neon blue color for orbiting particles
+                orbitLineColor: "rgba(0, 162, 255, 0.4)", // Neon blue for orbit lines
+                transitionDuration: 1500, // Duration of button transition animation in ms
+                vibrationIntensity: 3, // Maximum vibration offset in pixels
+                explosionDuration: 500 // Duration of explosion animation in ms
             };
             
             function createNavNodes() {
@@ -217,10 +222,17 @@
                     node.dataset.target = item.target;
                     node.textContent = item.label;
                     
-                    // Add click event
-                    node.addEventListener('click', function() {
-                        localStorage.setItem('targetSection', item.target);
-                        window.location.href = 'index.html';
+                    // Add click event with transition animation
+                    node.addEventListener('click', function(e) {
+                        e.preventDefault(); // Prevent default action
+                        
+                        if (isTransitioning) return; // Prevent multiple clicks during transition
+                        
+                        // Save target for later navigation
+                        const targetSection = this.dataset.target;
+                        
+                        // Start transition animation
+                        startTransitionAnimation(navNodes[index], targetSection);
                     });
                     
                     welcomeContainer.appendChild(node);
@@ -257,7 +269,8 @@
                         speed: config.orbitSpeed * (0.8 + Math.random() * 0.4), // Slight variation in speed
                         radius: config.orbitRadius * (0.8 + Math.random() * 0.4), // Slight variation in radius
                         size: 1 + Math.random() * 1.5,
-                        opacity: 0.5 + Math.random() * 0.5
+                        opacity: 0.5 + Math.random() * 0.5,
+                        color: 'rgba(0, 255, 255, 1)' // Neon blue color
                     });
                 }
                 
@@ -320,6 +333,62 @@
                 });
             }
             
+            // Variables for transition animation
+            let isTransitioning = false;
+            let selectedNode = null;
+            let transitionStartTime = 0;
+            let absorbedParticles = 0;
+            let totalParticles = 0;
+            let explosionStarted = false;
+            
+            // Handle transition animation when a nav node is clicked
+            function startTransitionAnimation(node, targetSection) {
+                isTransitioning = true;
+                selectedNode = node;
+                transitionStartTime = Date.now();
+                absorbedParticles = 0;
+                totalParticles = particles.length;
+                explosionStarted = false;
+                
+                // Calculate center position
+                const centerX = window.innerWidth / 2;
+                const centerY = window.innerHeight / 2;
+                
+                // Hide all other nodes
+                navNodes.forEach(navNode => {
+                    if (navNode !== selectedNode) {
+                        navNode.element.style.transition = 'opacity 0.5s ease-out';
+                        navNode.element.style.opacity = '0';
+                        
+                        // Remove from DOM after fade out
+                        setTimeout(() => {
+                            if (navNode.element.parentNode) {
+                                navNode.element.parentNode.removeChild(navNode.element);
+                            }
+                        }, 500);
+                    }
+                });
+                
+                // Move selected node to center
+                selectedNode.element.style.transition = 'left 0.8s ease-out, top 0.8s ease-out, box-shadow 0.8s ease-out';
+                selectedNode.element.style.left = `${centerX - selectedNode.radius}px`;
+                selectedNode.element.style.top = `${centerY - selectedNode.radius}px`;
+                selectedNode.element.style.boxShadow = '0 0 30px rgba(0, 162, 255, 0.8), 0 0 60px rgba(0, 162, 255, 0.5)';
+                
+                // Update node position in data model
+                setTimeout(() => {
+                    selectedNode.x = centerX;
+                    selectedNode.y = centerY;
+                    
+                    // Brighten orbiting particles
+                    selectedNode.orbitingParticles.forEach(particle => {
+                        particle.size *= 1.5;
+                        particle.opacity = 1;
+                        particle.speed *= 2; // Make them orbit faster
+                    });
+                }, 800);
+            }
+            
             // Particle class for stars/nodes
             class Particle {
                 constructor(x, y, size) {
@@ -330,43 +399,76 @@
                     this.size = size;
                     this.opacity = 0.2 + Math.random() * 0.5;
                     this.speed = {
-                        x: (Math.random() - 0.5) * 0.5, // Reduced speed for more stable animation
+                        x: (Math.random() - 0.5) * 0.5,
                         y: (Math.random() - 0.5) * 0.5
                     };
+                    this.absorbed = false;
+                    this.absorbProgress = 0;
                 }
                 
                 update(mouseX, mouseY) {
-                    // Natural movement
-                    this.x += this.speed.x;
-                    this.y += this.speed.y;
-                    
-                    // Boundary check with bounce effect
-                    if (this.x < 0 || this.x > canvas.width) {
-                        this.speed.x *= -1;
-                    }
-                    if (this.y < 0 || this.y > canvas.height) {
-                        this.speed.y *= -1;
-                    }
-                    
-                    // Mouse influence - significantly reduced
-                    if (mouseX && mouseY) {
-                        const dx = mouseX - this.x;
-                        const dy = mouseY - this.y;
+                    if (isTransitioning && selectedNode && !this.absorbed) {
+                        // Calculate distance to selected node
+                        const dx = selectedNode.x - this.x;
+                        const dy = selectedNode.y - this.y;
                         const distance = Math.sqrt(dx * dx + dy * dy);
                         
-                        // Reduced influence range from 300 to 150
-                        if (distance < 150) {
-                            // Reduced force by a factor of 5 (from 3000 to 15000)
-                            const force = (150 - distance) / 15000;
+                        // Transition progress (0 to 1)
+                        const elapsed = Date.now() - transitionStartTime;
+                        const progress = Math.min(1, elapsed / config.transitionDuration);
+                        
+                        // Gradually increase attraction force over time
+                        const attractionForce = 0.01 * progress;
+                        
+                        // Apply attraction to selected node
+                        this.x += dx * attractionForce;
+                        this.y += dy * attractionForce;
+                        
+                        // Check if particle has been absorbed
+                        if (distance < selectedNode.radius) {
+                            this.absorbed = true;
+                            absorbedParticles++;
                             
-                            // Apply attraction force towards mouse
-                            this.x += dx * force;
-                            this.y += dy * force;
+                            // If all particles absorbed, trigger explosion
+                            if (absorbedParticles >= totalParticles && !explosionStarted) {
+                                triggerExplosion();
+                            }
+                        }
+                        
+                        return;
+                    }
+                    
+                    if (!this.absorbed) {
+                        // Regular movement when not in transition
+                        this.x += this.speed.x;
+                        this.y += this.speed.y;
+                        
+                        // Boundary check with bounce effect
+                        if (this.x < 0 || this.x > canvas.width) {
+                            this.speed.x *= -1;
+                        }
+                        if (this.y < 0 || this.y > canvas.height) {
+                            this.speed.y *= -1;
+                        }
+                        
+                        // Mouse influence - significantly reduced
+                        if (mouseX && mouseY) {
+                            const dx = mouseX - this.x;
+                            const dy = mouseY - this.y;
+                            const distance = Math.sqrt(dx * dx + dy * dy);
+                            
+                            if (distance < 150) {
+                                const force = (150 - distance) / 15000;
+                                this.x += dx * force;
+                                this.y += dy * force;
+                            }
                         }
                     }
                 }
                 
                 draw() {
+                    if (this.absorbed) return; // Don't draw absorbed particles
+                    
                     ctx.beginPath();
                     ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
                     ctx.fillStyle = `rgba(255, 255, 255, ${this.opacity})`;
@@ -489,6 +591,89 @@
                 mouseY = null;
             });
             
+            // Trigger explosion animation
+            function triggerExplosion() {
+                explosionStarted = true;
+                
+                // Create explosion effect
+                const explosionParticles = [];
+                const particleCount = 100;
+                
+                // Create explosion particles
+                for (let i = 0; i < particleCount; i++) {
+                    const angle = Math.random() * Math.PI * 2;
+                    const speed = 2 + Math.random() * 5;
+                    const size = 1 + Math.random() * 3;
+                    
+                    explosionParticles.push({
+                        x: selectedNode.x,
+                        y: selectedNode.y,
+                        vx: Math.cos(angle) * speed,
+                        vy: Math.sin(angle) * speed,
+                        size: size,
+                        color: `rgba(${Math.random() > 0.5 ? '0, 162, 255' : '255, 255, 255'}, ${0.5 + Math.random() * 0.5})`,
+                        life: 1
+                    });
+                }
+                
+                // Make selected node vibrate
+                let vibrationCount = 0;
+                const vibrationInterval = setInterval(() => {
+                    if (vibrationCount >= 10 || !selectedNode.element) {
+                        clearInterval(vibrationInterval);
+                        return;
+                    }
+                    
+                    const offsetX = (Math.random() - 0.5) * config.vibrationIntensity;
+                    const offsetY = (Math.random() - 0.5) * config.vibrationIntensity;
+                    
+                    if (selectedNode.element) {
+                        selectedNode.element.style.transform = `translate(${offsetX}px, ${offsetY}px)`;
+                    }
+                    
+                    vibrationCount++;
+                }, 50);
+                
+                // Animate explosion
+                let explosionProgress = 0;
+                const explosionInterval = setInterval(() => {
+                    explosionProgress += 0.05;
+                    
+                    if (explosionProgress >= 1) {
+                        clearInterval(explosionInterval);
+                        
+                        // Hide selected node
+                        if (selectedNode.element && selectedNode.element.parentNode) {
+                            selectedNode.element.style.transition = 'opacity 0.2s ease-out';
+                            selectedNode.element.style.opacity = '0';
+                            
+                            setTimeout(() => {
+                                // Navigate to the target page
+                                window.location.href = `index.html`;
+                            }, 200);
+                        }
+                    }
+                    
+                    // Update explosion particles
+                    explosionParticles.forEach(particle => {
+                        particle.x += particle.vx;
+                        particle.y += particle.vy;
+                        particle.life -= 0.02;
+                        
+                        // Draw explosion particle
+                        if (particle.life > 0) {
+                            ctx.beginPath();
+                            ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+                            ctx.fillStyle = particle.color.replace(')', `, ${particle.life})`);
+                            ctx.fill();
+                        }
+                    });
+                }, 1000 / 60);
+                
+                // Store target section for navigation after explosion
+                localStorage.setItem('targetSection', selectedNode.target);
+            }
+            
             // Animation loop
             function animate() {
                 // Clear canvas
@@ -500,7 +685,32 @@
                     particle.draw();
                 });
                 
-                // Update and draw orbiting particles for each nav node
+                // Draw connections if not transitioning
+                if (!isTransitioning) {
+                    drawWebConnections();
+                } else if (selectedNode) {
+                    // Draw connections from selected node to particles during transition
+                    particles.forEach(particle => {
+                        if (!particle.absorbed) {
+                            const dx = particle.x - selectedNode.x;
+                            const dy = particle.y - selectedNode.y;
+                            const distance = Math.sqrt(dx * dx + dy * dy);
+                            
+                            if (distance < connectionDistance * 2) {
+                                const opacity = 0.3 * (1 - distance / (connectionDistance * 2));
+                                
+                                ctx.beginPath();
+                                ctx.moveTo(particle.x, particle.y);
+                                ctx.lineTo(selectedNode.x, selectedNode.y);
+                                ctx.strokeStyle = `rgba(0, 162, 255, ${opacity})`;
+                                ctx.lineWidth = 0.8;
+                                ctx.stroke();
+                            }
+                        }
+                    });
+                }
+                
+                // Update and draw orbiting particles
                 navNodes.forEach(navNode => {
                     navNode.orbitingParticles.forEach(orbitParticle => {
                         // Update angle for orbit
@@ -513,21 +723,18 @@
                         // Draw orbiting particle
                         ctx.beginPath();
                         ctx.arc(x, y, orbitParticle.size, 0, Math.PI * 2);
-                        ctx.fillStyle = `rgba(255, 255, 255, ${orbitParticle.opacity})`;
+                        ctx.fillStyle = config.orbitColor;
                         ctx.fill();
                         
                         // Draw thin line connecting to nav node center
                         ctx.beginPath();
                         ctx.moveTo(navNode.x, navNode.y);
                         ctx.lineTo(x, y);
-                        ctx.strokeStyle = `rgba(255, 255, 255, ${orbitParticle.opacity * 0.5})`;
+                        ctx.strokeStyle = config.orbitLineColor;
                         ctx.lineWidth = 0.5;
                         ctx.stroke();
                     });
                 });
-                
-                // Draw web-like connections
-                drawWebConnections();
                 
                 requestAnimationFrame(animate);
             }
