@@ -157,26 +157,26 @@
                 // Place nav nodes around the center of the screen
                 const centerX = window.innerWidth / 2;
                 const centerY = window.innerHeight / 2;
-                const screenPadding = 50; // Padding from screen edge
                 
                 // Parameters for distributing nodes
-                const nodeRadius = 180; // Distance from center point
-                const randomSpread = 60; // Random variation in distance from center
+                const randomHorizontalSpread = window.innerWidth * 0.9; // 30% of screen width for horizontal spread
+                const screenHeight = window.innerHeight * 0.9; // Use 70% of screen height for vertical distribution
+                const verticalStart = window.innerHeight * 0.05; // Start 15% from the top
                 
-                // Calculate positions that center around the middle of the screen
+                // Calculate positions that preserve vertical order but randomize horizontal position
                 const positions = [];
                 
-                // Create positions for nodes in a roughly circular pattern with random variation
+                // Divide the available vertical space evenly based on number of items
+                const sectionHeight = screenHeight / navItems.length;
+                
                 for (let i = 0; i < navItems.length; i++) {
-                    // Calculate position in a circle around center, with angle based on index
-                    const angle = (i / navItems.length) * Math.PI * 2;
+                    // Fixed vertical position (in order from top to bottom)
+                    // Each item is centered in its vertical section with a small random offset
+                    const randomVerticalOffset = (Math.random() - 0.5) * (sectionHeight * 0.5); // Allow some randomness but keep order
+                    const y = verticalStart + (i * sectionHeight) + (sectionHeight / 2) + randomVerticalOffset;
                     
-                    // Add random variation to the radius
-                    const randomRadius = nodeRadius + (Math.random() * randomSpread - randomSpread/2);
-                    
-                    // Calculate x and y with random variation
-                    const x = centerX + Math.cos(angle) * randomRadius;
-                    const y = centerY + Math.sin(angle) * randomRadius;
+                    // Random horizontal position across the width of the screen
+                    const x = centerX + (Math.random() - 0.5) * randomHorizontalSpread;
                     
                     positions.push({ x, y });
                 }
@@ -220,19 +220,21 @@
             // Update nav node positions on window resize
             function positionNavNodes() {
                 const centerX = window.innerWidth / 2;
-                const centerY = window.innerHeight / 2;
-                const nodeRadius = 180;
-                const randomSpread = 60;
+                const randomHorizontalSpread = window.innerWidth * 0.3;
+                const screenHeight = window.innerHeight * 0.7;
+                const verticalStart = window.innerHeight * 0.15;
                 
                 // Calculate new positions
                 const positions = [];
+                const sectionHeight = screenHeight / navNodes.length;
                 
                 for (let i = 0; i < navNodes.length; i++) {
-                    const angle = (i / navNodes.length) * Math.PI * 2;
-                    const randomRadius = nodeRadius + (Math.random() * randomSpread - randomSpread/2);
+                    // Maintain vertical order with slight randomness
+                    const randomVerticalOffset = (Math.random() - 0.5) * (sectionHeight * 0.5);
+                    const y = verticalStart + (i * sectionHeight) + (sectionHeight / 2) + randomVerticalOffset;
                     
-                    const x = centerX + Math.cos(angle) * randomRadius;
-                    const y = centerY + Math.sin(angle) * randomRadius;
+                    // Randomize horizontal position
+                    const x = centerX + (Math.random() - 0.5) * randomHorizontalSpread;
                     
                     positions.push({ x, y });
                 }
