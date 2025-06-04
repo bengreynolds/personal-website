@@ -155,16 +155,16 @@
             const config = {
                 minNodeSpacing: 150, // Minimum space between any two nodes in pixels
                 screenMargin: 0.1, // 10% margin from screen edges
-                orbitingParticles: 8, // Initial number of orbiting particles per nav node
-                maxOrbitingParticles: 24, // Maximum number of orbiting particles during absorption
-                orbitRadius: 60, // Radius of orbit around nav nodes
-                orbitSpeed: 0.005, // Speed of orbiting particles
+                orbitingParticles: 20, // Initial number of orbiting particles per nav node
+                maxOrbitingParticles: 100, // Maximum number of orbiting particles during absorption
+                orbitRadius: 80, // Radius of orbit around nav nodes
+                orbitSpeed: 0.008, // Speed of orbiting particles
                 particleMinDistance: 20, // Minimum distance between particles
                 orbitColor: "rgba(0, 162, 255, 0.8)", // Neon blue color for orbiting particles
                 orbitLineColor: "rgba(0, 162, 255, 0.4)", // Neon blue for orbit lines
-                transitionDuration: 900, // Increased transition duration by 500ms (from 400ms to 900ms)
+                transitionDuration: 10000, // Increased transition duration by 500ms (from 400ms to 900ms)
                 vibrationIntensity: 3, // Maximum vibration offset in pixels
-                explosionDuration: 1000 // Increased explosion duration by 500ms (from 500ms to 1000ms)
+                explosionDuration: 10000 // Increased explosion duration by 500ms (from 500ms to 1000ms)
             };
             
             // Create navigation nodes as part of the welcome container
@@ -380,7 +380,7 @@
                             if (navNode.element.parentNode) {
                                 navNode.element.parentNode.removeChild(navNode.element);
                             }
-                        }, 500);
+                        }, 10000);
                     }
                 });
                 
@@ -404,7 +404,7 @@
                         particle.opacity = 1;
                         particle.speed *= 2; // Make them orbit faster
                     });
-                }, 100); // Reduced from 800ms to match faster transition
+                }, 10000); // Reduced from 800ms to match faster transition
             }
             
             // Function to start node vibration
@@ -468,7 +468,7 @@
                                 // Navigate to the target page
                                 localStorage.setItem('targetSection', selectedNode.target);
                                 window.location.href = 'index.html';
-                            }, 200);
+                            }, 10000);
                         }
                     }
                 }, 1000 / 60);
@@ -578,8 +578,8 @@
             
             // Create particles with minimum spacing
             const particles = [];
-            const particleCount = 375; // Number of particles
-            const connectionDistance = 150; // Distance for connections
+            const particleCount = 450; // Number of particles
+            const connectionDistance = 160; // Distance for connections
             
             console.log(`Creating ${particleCount} particles with minimum spacing`);
             
