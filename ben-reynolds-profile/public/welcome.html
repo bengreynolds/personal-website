@@ -222,8 +222,8 @@
                     this.opacity = 0.2 + Math.random() * 0.5;
                     this.connections = [];
                     this.speed = {
-                        x: (Math.random() - 0.5) * 0.2,
-                        y: (Math.random() - 0.5) * 0.2
+                        x: (Math.random() - 0.5) * 0.7,
+                        y: (Math.random() - 0.5) * 0.7
                     };
                 }
                 
@@ -267,7 +267,8 @@
             
             // Create particles
             const particles = [];
-            const particleCount = 500; // Many more particles for a denser network
+            const particleCount = 500; // Increased from 150 to 375 (2.5x more dots)
+            const connectionDistance = 150; // Keeping the same connection distance
             
             for (let i = 0; i < particleCount; i++) {
                 const size = Math.random() * 2 + 1;
@@ -276,46 +277,29 @@
                 particles.push(new Particle(x, y, size));
             }
             
-            // Find connections between particles
-            function findConnections() {
-                particles.forEach(particle => {
-                    particle.connections = [];
-                    
-                    particles.forEach(otherParticle => {
-                        if (particle !== otherParticle) {
-                            const dx = particle.x - otherParticle.x;
-                            const dy = particle.y - otherParticle.y;
-                            const distance = Math.sqrt(dx * dx + dy * dy);
-                            
-                            if (distance < 100) { // Connection distance threshold
-                                particle.connections.push({
-                                    particle: otherParticle,
-                                    distance: distance
-                                });
-                            }
-                        }
-                    });
-                    
-                    // Limit connections to closest few
-                    particle.connections.sort((a, b) => a.distance - b.distance);
-                    particle.connections = particle.connections.slice(0, 3);
-                });
-            }
-            
-            // Draw connections between particles
-            function drawConnections() {
-                particles.forEach(particle => {
-                    particle.connections.forEach(connection => {
-                        const opacity = Math.max(0.05, 0.3 - (connection.distance / 200));
+            // Draw all connections between particles within range
+            function drawWebConnections() {
+                // Draw connections between all particles within range
+                for (let i = 0; i < particles.length; i++) {
+                    for (let j = i + 1; j < particles.length; j++) {
+                        const dx = particles[i].x - particles[j].x;
+                        const dy = particles[i].y - particles[j].y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
                         
-                        ctx.beginPath();
-                        ctx.moveTo(particle.x, particle.y);
-                        ctx.lineTo(connection.particle.x, connection.particle.y);
-                        ctx.strokeStyle = `rgba(255, 255, 255, ${opacity})`;
-                        ctx.lineWidth = 0.5;
-                        ctx.stroke();
-                    });
-                });
+                        // Only connect particles within the connection distance
+                        if (distance < connectionDistance) {
+                            // Calculate line opacity based on distance
+                            const opacity = 0.2 * (1 - distance / connectionDistance);
+                            
+                            ctx.beginPath();
+                            ctx.moveTo(particles[i].x, particles[i].y);
+                            ctx.lineTo(particles[j].x, particles[j].y);
+                            ctx.strokeStyle = `rgba(255, 255, 255, ${opacity})`;
+                            ctx.lineWidth = 0.5;
+                            ctx.stroke();
+                        }
+                    }
+                }
             }
             
             // Mouse tracking
@@ -343,17 +327,13 @@
                     particle.draw();
                 });
                 
-                // Find and draw connections (not every frame for performance)
-                if (Math.random() > 0.95) {
-                    findConnections();
-                }
-                drawConnections();
+                // Draw web-like connections
+                drawWebConnections();
                 
                 requestAnimationFrame(animate);
             }
             
             // Start animation
-            findConnections(); // Initial connections
             animate();
         }
 
