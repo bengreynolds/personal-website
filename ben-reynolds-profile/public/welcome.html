@@ -146,6 +146,16 @@
             // Create navigation nodes as part of the welcome container
             const navNodes = [];
             
+            // Configuration variables for node spacing and orbiting particles
+            const config = {
+                minNodeSpacing: 150, // Minimum space between any two nodes in pixels
+                screenMargin: 0.1, // 10% margin from screen edges
+                orbitingParticles: 20, // Number of orbiting particles per nav node
+                orbitRadius: 80, // Radius of orbit around nav nodes
+                orbitSpeed: 0.008, // Speed of orbiting particles
+                particleMinDistance: 100 // Minimum distance between particles
+            };
+            
             function createNavNodes() {
                 // Clear any existing nav nodes
                 while (welcomeContainer.firstChild) {
@@ -154,30 +164,46 @@
                 
                 navNodes.length = 0; // Clear array
                 
-                // Place nav nodes around the center of the screen
-                const centerX = window.innerWidth / 2;
-                const centerY = window.innerHeight / 2;
+                // Calculate usable screen area with margins
+                const marginX = window.innerWidth * config.screenMargin;
+                const marginY = window.innerHeight * config.screenMargin;
+                const usableWidth = window.innerWidth - (marginX * 2);
+                const usableHeight = window.innerHeight - (marginY * 2);
                 
-                // Parameters for distributing nodes
-                const randomHorizontalSpread = window.innerWidth * 0.9; // 30% of screen width for horizontal spread
-                const screenHeight = window.innerHeight * 0.9; // Use 70% of screen height for vertical distribution
-                const verticalStart = window.innerHeight * 0.05; // Start 15% from the top
-                
-                // Calculate positions that preserve vertical order but randomize horizontal position
+                // Generate random positions for nodes with minimum spacing
                 const positions = [];
+                const nodeSize = 90; // Size of nav nodes
                 
-                // Divide the available vertical space evenly based on number of items
-                const sectionHeight = screenHeight / navItems.length;
-                
+                // Try to place each node with minimum spacing
                 for (let i = 0; i < navItems.length; i++) {
-                    // Fixed vertical position (in order from top to bottom)
-                    // Each item is centered in its vertical section with a small random offset
-                    const randomVerticalOffset = (Math.random() - 0.5) * (sectionHeight * 0.5); // Allow some randomness but keep order
-                    const y = verticalStart + (i * sectionHeight) + (sectionHeight / 2) + randomVerticalOffset;
+                    let validPosition = false;
+                    let attempts = 0;
+                    let x, y;
                     
-                    // Random horizontal position across the width of the screen
-                    const x = centerX + (Math.random() - 0.5) * randomHorizontalSpread;
+                    // Try up to 100 times to find a valid position
+                    while (!validPosition && attempts < 100) {
+                        // Generate random position within usable area
+                        x = marginX + Math.random() * usableWidth;
+                        y = marginY + Math.random() * usableHeight;
+                        
+                        // Check distance from all existing nodes
+                        validPosition = true;
+                        for (let j = 0; j < positions.length; j++) {
+                            const dx = x - positions[j].x;
+                            const dy = y - positions[j].y;
+                            const distance = Math.sqrt(dx * dx + dy * dy);
+                            
+                            if (distance < config.minNodeSpacing) {
+                                validPosition = false;
+                                break;
+                            }
+                        }
+                        
+                        attempts++;
+                    }
                     
+                    // If we couldn't find a valid position after max attempts,
+                    // just use the last attempted position
                     positions.push({ x, y });
                 }
                 
@@ -199,57 +225,98 @@
                     
                     welcomeContainer.appendChild(node);
                     
-                    // Position the node
-                    const x = positions[index].x - 45; // 45 is half of node width
-                    const y = positions[index].y - 45; // 45 is half of node height
+                    // Position the node (centering it on the calculated position)
+                    const nodeX = positions[index].x - (nodeSize / 2);
+                    const nodeY = positions[index].y - (nodeSize / 2);
                     
-                    node.style.left = `${x}px`;
-                    node.style.top = `${y}px`;
+                    node.style.left = `${nodeX}px`;
+                    node.style.top = `${nodeY}px`;
                     
                     // Store node information for connections
                     navNodes.push({
                         element: node,
                         x: positions[index].x, // Center point of node
                         y: positions[index].y, // Center point of node
-                        radius: 45,
-                        target: item.target
+                        radius: nodeSize / 2,
+                        target: item.target,
+                        orbitingParticles: createOrbitingParticles(positions[index].x, positions[index].y)
                     });
                 });
             }
             
+            // Create orbiting particles for a nav node
+            function createOrbitingParticles(centerX, centerY) {
+                const particles = [];
+                
+                for (let i = 0; i < config.orbitingParticles; i++) {
+                    // Distribute particles evenly around the circle
+                    const angle = (i / config.orbitingParticles) * Math.PI * 2;
+                    
+                    particles.push({
+                        angle: angle,
+                        speed: config.orbitSpeed * (0.8 + Math.random() * 0.4), // Slight variation in speed
+                        radius: config.orbitRadius * (0.8 + Math.random() * 0.4), // Slight variation in radius
+                        size: 1 + Math.random() * 1.5,
+                        opacity: 0.5 + Math.random() * 0.5
+                    });
+                }
+                
+                return particles;
+            }
+            
             // Update nav node positions on window resize
             function positionNavNodes() {
-                const centerX = window.innerWidth / 2;
-                const randomHorizontalSpread = window.innerWidth * 0.3;
-                const screenHeight = window.innerHeight * 0.7;
-                const verticalStart = window.innerHeight * 0.15;
+                // Calculate usable screen area with margins
+                const marginX = window.innerWidth * config.screenMargin;
+                const marginY = window.innerHeight * config.screenMargin;
+                const usableWidth = window.innerWidth - (marginX * 2);
+                const usableHeight = window.innerHeight - (marginY * 2);
                 
-                // Calculate new positions
+                // Generate new random positions
                 const positions = [];
-                const sectionHeight = screenHeight / navNodes.length;
+                const nodeSize = 90;
                 
                 for (let i = 0; i < navNodes.length; i++) {
-                    // Maintain vertical order with slight randomness
-                    const randomVerticalOffset = (Math.random() - 0.5) * (sectionHeight * 0.5);
-                    const y = verticalStart + (i * sectionHeight) + (sectionHeight / 2) + randomVerticalOffset;
+                    let validPosition = false;
+                    let attempts = 0;
+                    let x, y;
                     
-                    // Randomize horizontal position
-                    const x = centerX + (Math.random() - 0.5) * randomHorizontalSpread;
+                    while (!validPosition && attempts < 100) {
+                        x = marginX + Math.random() * usableWidth;
+                        y = marginY + Math.random() * usableHeight;
+                        
+                        validPosition = true;
+                        for (let j = 0; j < positions.length; j++) {
+                            const dx = x - positions[j].x;
+                            const dy = y - positions[j].y;
+                            const distance = Math.sqrt(dx * dx + dy * dy);
+                            
+                            if (distance < config.minNodeSpacing) {
+                                validPosition = false;
+                                break;
+                            }
+                        }
+                        
+                        attempts++;
+                    }
                     
                     positions.push({ x, y });
                 }
                 
                 // Update node positions
                 navNodes.forEach((node, index) => {
-                    const x = positions[index].x - 45;
-                    const y = positions[index].y - 45;
+                    const nodeX = positions[index].x - (nodeSize / 2);
+                    const nodeY = positions[index].y - (nodeSize / 2);
                     
-                    node.element.style.left = `${x}px`;
-                    node.element.style.top = `${y}px`;
+                    node.element.style.left = `${nodeX}px`;
+                    node.element.style.top = `${nodeY}px`;
                     
                     // Update stored coordinates
                     node.x = positions[index].x;
                     node.y = positions[index].y;
+                    
+                    // Recreate orbiting particles
+                    node.orbitingParticles = createOrbitingParticles(node.x, node.y);
                 });
             }
             
@@ -263,8 +330,8 @@
                     this.size = size;
                     this.opacity = 0.2 + Math.random() * 0.5;
                     this.speed = {
-                        x: (Math.random() - 0.5) * 0.3, // Reduced speed for more stable animation
-                        y: (Math.random() - 0.5) * 0.3
+                        x: (Math.random() - 0.5) * 0.5, // Reduced speed for more stable animation
+                        y: (Math.random() - 0.5) * 0.5
                     };
                 }
                 
@@ -309,15 +376,41 @@
             
             // Create particles
             const particles = [];
-            const particleCount = 375; // Reduced slightly for performance
-            const connectionDistance = 150;
+            const particleCount = 500; // Number of particles
+            const connectionDistance = 150; // Distance for connections
             
-            console.log(`Creating ${particleCount} particles`);
+            console.log(`Creating ${particleCount} particles with minimum spacing`);
             
+            // Create particles with minimum spacing
             for (let i = 0; i < particleCount; i++) {
                 const size = Math.random() * 2 + 1;
-                const x = Math.random() * canvas.width;
-                const y = Math.random() * canvas.height;
+                let x, y;
+                let validPosition = false;
+                let attempts = 0;
+                
+                // Try to place particle with minimum spacing
+                while (!validPosition && attempts < 50) {
+                    x = Math.random() * canvas.width;
+                    y = Math.random() * canvas.height;
+                    
+                    validPosition = true;
+                    
+                    // Check distance from existing particles
+                    for (let j = 0; j < particles.length; j++) {
+                        const dx = x - particles[j].x;
+                        const dy = y - particles[j].y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        
+                        if (distance < config.particleMinDistance) {
+                            validPosition = false;
+                            break;
+                        }
+                    }
+                    
+                    attempts++;
+                }
+                
+                // Create and add the particle
                 particles.push(new Particle(x, y, size));
             }
             
@@ -376,7 +469,7 @@
                         ctx.moveTo(navNodes[i].x, navNodes[i].y);
                         ctx.lineTo(navNodes[j].x, navNodes[j].y);
                         ctx.strokeStyle = `rgba(255, 255, 255, ${opacity})`;
-                        ctx.lineWidth = 1.0; // Thicker lines between nav nodes
+                        ctx.lineWidth = 0.1; // Thicker lines between nav nodes
                         ctx.stroke();
                     }
                 }
@@ -405,6 +498,32 @@
                 particles.forEach(particle => {
                     particle.update(mouseX, mouseY);
                     particle.draw();
+                });
+                
+                // Update and draw orbiting particles for each nav node
+                navNodes.forEach(navNode => {
+                    navNode.orbitingParticles.forEach(orbitParticle => {
+                        // Update angle for orbit
+                        orbitParticle.angle += orbitParticle.speed;
+                        
+                        // Calculate position based on orbit
+                        const x = navNode.x + Math.cos(orbitParticle.angle) * orbitParticle.radius;
+                        const y = navNode.y + Math.sin(orbitParticle.angle) * orbitParticle.radius;
+                        
+                        // Draw orbiting particle
+                        ctx.beginPath();
+                        ctx.arc(x, y, orbitParticle.size, 0, Math.PI * 2);
+                        ctx.fillStyle = `rgba(255, 255, 255, ${orbitParticle.opacity})`;
+                        ctx.fill();
+                        
+                        // Draw thin line connecting to nav node center
+                        ctx.beginPath();
+                        ctx.moveTo(navNode.x, navNode.y);
+                        ctx.lineTo(x, y);
+                        ctx.strokeStyle = `rgba(255, 255, 255, ${orbitParticle.opacity * 0.5})`;
+                        ctx.lineWidth = 0.5;
+                        ctx.stroke();
+                    });
                 });
                 
                 // Draw web-like connections
