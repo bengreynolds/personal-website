@@ -8,9 +8,9 @@
         :root {
             --primary: #2a5298;
             --accent: #1e3c72;
-            --background: #f7fafd;
-            --surface: #fff;
-            --text: #222;
+            --background: #000000;
+            --text-light: #ffffff;
+            --glow-color: rgba(255, 255, 255, 0.7);
         }
         
         body, html {
@@ -21,6 +21,17 @@
             overflow: hidden;
             font-family: 'Roboto', 'Segoe UI', Arial, sans-serif;
             background: var(--background);
+            color: var(--text-light);
+        }
+        
+        #stars-container {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: 0;
+            pointer-events: none; /* Ensure it doesn't block interaction with other elements */
         }
         
         .welcome-container {
@@ -33,7 +44,8 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            background: linear-gradient(135deg, #f7fafd 0%, #e0e6f7 100%);
+            background: transparent; /* Changed from black to transparent to show constellation */
+            z-index: 1;
         }
         
         .animation-container {
@@ -43,45 +55,71 @@
             display: flex;
             justify-content: center;
             align-items: center;
+            z-index: 2;
         }
         
         .box-rotation-path {
             position: relative;
             width: 300px;
             height: 300px;
+            animation: rotateInPlane 20s linear infinite;
         }
         
         .box {
             position: absolute;
             width: 100px;
             height: 100px;
-            background-color: rgba(42, 82, 152, 0.9);
-            border: 2px solid white;
+            background-color: rgba(42, 82, 152, 0.85);
+            border: 2px solid rgba(255, 255, 255, 0.8);
             border-radius: 8px;
             display: flex;
             justify-content: center;
             align-items: center;
             color: white;
             font-weight: bold;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.7), 
+                        0 0 35px rgba(255, 255, 255, 0.4), 
+                        0 0 50px rgba(255, 255, 255, 0.2),
+                        0 0 65px rgba(255, 255, 255, 0.1);
             cursor: pointer;
-            transition: transform 0.3s, background-color 0.3s;
+            transition: transform 0.3s, background-color 0.3s, box-shadow 0.4s;
             font-size: 14px;
             text-align: center;
             padding: 10px;
             box-sizing: border-box;
+            backdrop-filter: blur(3px);
+            /* Add counter-rotation to keep boxes upright */
+            animation: counterRotate 20s linear infinite;
+        }
+        
+        /* Add counter-rotation animation to keep boxes upright */
+        @keyframes counterRotate {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(-360deg);
+            }
         }
         
         .box:hover {
             background-color: var(--accent);
-            transform: scale(1.1);
+            animation: none; /* Stop the counter-rotation on hover */
+            transform: scale(1.1); /* Don't include rotation in hover state */
+            box-shadow: 0 0 25px rgba(255, 255, 255, 0.9), 
+                        0 0 50px rgba(255, 255, 255, 0.6), 
+                        0 0 75px rgba(255, 255, 255, 0.3),
+                        0 0 100px rgba(255, 255, 255, 0.1);
         }
         
         .welcome-title {
-            font-size: 2.5rem;
-            color: var(--primary);
+            font-size: 2.8rem;
+            color: var(--text-light);
             margin-bottom: 2rem;
             text-align: center;
+            text-shadow: 0 0 15px rgba(255, 255, 255, 0.5), 
+                         0 0 30px rgba(255, 255, 255, 0.3);
+            z-index: 2;
         }
         
         .enter-site-btn {
@@ -93,13 +131,37 @@
             border-radius: 24px;
             font-size: 1.1rem;
             cursor: pointer;
-            box-shadow: 0 4px 12px rgba(42, 82, 152, 0.2);
-            transition: background-color 0.3s, transform 0.3s;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.5), 
+                        0 0 40px rgba(255, 255, 255, 0.3),
+                        0 0 60px rgba(255, 255, 255, 0.1);
+            transition: background-color 0.3s, transform 0.3s, box-shadow 0.3s;
+            z-index: 2;
         }
         
         .enter-site-btn:hover {
             background-color: var(--accent);
             transform: scale(1.05);
+            box-shadow: 0 0 25px rgba(255, 255, 255, 0.7), 
+                        0 0 50px rgba(255, 255, 255, 0.4),
+                        0 0 75px rgba(255, 255, 255, 0.2);
+        }
+        
+        .constellation-node {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background-color: white;
+            border-radius: 50%;
+            z-index: 1;
+            transition: opacity 0.5s;
+        }
+        
+        .constellation-line {
+            position: absolute;
+            background-color: rgba(255, 255, 255, 0.2);
+            transform-origin: 0% 50%;
+            z-index: 1;
+            transition: opacity 0.3s;
         }
         
         @keyframes rotateInPlane {
@@ -110,9 +172,26 @@
                 transform: rotate(360deg);
             }
         }
+        
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+                opacity: 0.8;
+            }
+            50% {
+                transform: scale(1.2);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(1);
+                opacity: 0.8;
+            }
+        }
     </style>
 </head>
 <body>
+    <div id="stars-container"></div>
+    
     <div class="welcome-container">
         <h1 class="welcome-title">Welcome to Ben Reynolds' Portfolio</h1>
         
@@ -125,6 +204,7 @@
     
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // Navigation items for boxes
             const navItems = [
                 { target: 'home', label: 'Home' },
                 { target: 'about', label: 'Overview' },
@@ -133,6 +213,143 @@
                 { target: 'contact', label: 'Contact' }
             ];
             
+            // Create constellation background
+            createConstellationBackground();
+            
+            // Setup rotating boxes
+            setupRotatingBoxes(navItems);
+            
+            // Enter site button
+            document.getElementById('enter-site-btn').addEventListener('click', function() {
+                window.location.href = 'index.html';
+            });
+        });
+
+        function createConstellationBackground() {
+            const starsContainer = document.getElementById('stars-container');
+            const numberOfNodes = 150; // Increased number of nodes
+            const nodes = [];
+            
+            // Create stars/dots
+            for (let i = 0; i < numberOfNodes; i++) {
+                const node = document.createElement('div');
+                node.className = 'constellation-node';
+                
+                // Random position
+                const x = Math.random() * window.innerWidth;
+                const y = Math.random() * window.innerHeight;
+                
+                node.style.left = `${x}px`;
+                node.style.top = `${y}px`;
+                
+                // Random size (some stars bigger than others)
+                const size = 1 + Math.random() * 3;
+                node.style.width = `${size}px`;
+                node.style.height = `${size}px`;
+                
+                // Random opacity
+                node.style.opacity = 0.2 + Math.random() * 0.8;
+                
+                // Add subtle animation to some nodes
+                if (Math.random() > 0.6) { // Increased probability of pulsing
+                    node.style.animation = `pulse ${3 + Math.random() * 7}s infinite`;
+                }
+                
+                starsContainer.appendChild(node);
+                nodes.push({
+                    element: node,
+                    x: x,
+                    y: y
+                });
+            }
+            
+            // Create connecting lines between nodes (web-like pattern)
+            createWebConnections(nodes, starsContainer);
+            
+            // Add movement to the constellation
+            animateConstellation(nodes);
+        }
+        
+        function createWebConnections(nodes, container) {
+            // Clear any existing lines
+            document.querySelectorAll('.constellation-line').forEach(line => line.remove());
+            
+            // Create a more interconnected web pattern
+            for (let i = 0; i < nodes.length; i++) {
+                // Find nearby nodes for connections
+                const nearbyNodes = nodes
+                    .filter((_, idx) => idx !== i)
+                    .map((node, index) => {
+                        const dx = nodes[i].x - node.x;
+                        const dy = nodes[i].y - node.y;
+                        return {
+                            index: index,
+                            node: node,
+                            distance: Math.sqrt(dx * dx + dy * dy)
+                        };
+                    })
+                    .filter(item => item.distance < 250) // Increased connection distance
+                    .sort((a, b) => a.distance - b.distance)
+                    .slice(0, 3); // Connect to more nearby nodes (up to 3)
+                
+                // Create connections with varying opacity based on distance
+                nearbyNodes.forEach(nodeInfo => {
+                    const opacity = Math.max(0.05, 0.3 - (nodeInfo.distance / 800));
+                    createLine(nodes[i], nodeInfo.node, container, opacity);
+                });
+            }
+        }
+        
+        function createLine(node1, node2, container, opacity = 0.2) {
+            const line = document.createElement('div');
+            line.className = 'constellation-line';
+            
+            // Calculate line position and dimensions
+            const dx = node2.x - node1.x;
+            const dy = node2.y - node1.y;
+            const length = Math.sqrt(dx * dx + dy * dy);
+            const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+            
+            line.style.width = `${length}px`;
+            line.style.height = '1px';
+            line.style.left = `${node1.x}px`;
+            line.style.top = `${node1.y}px`;
+            line.style.transform = `rotate(${angle}deg)`;
+            line.style.backgroundColor = `rgba(255, 255, 255, ${opacity})`;
+            
+            container.appendChild(line);
+            return line;
+        }
+        
+        function animateConstellation(nodes) {
+            const starsContainer = document.getElementById('stars-container');
+            
+            // Animate nodes slightly
+            nodes.forEach(node => {
+                if (Math.random() > 0.9) { // Only move some nodes each frame for a subtle effect
+                    const moveAmount = (Math.random() - 0.5) * 1.5; // Slightly faster movement
+                    node.x += moveAmount;
+                    node.y += moveAmount;
+                    
+                    // Keep within bounds
+                    node.x = Math.max(0, Math.min(window.innerWidth, node.x));
+                    node.y = Math.max(0, Math.min(window.innerHeight, node.y));
+                    
+                    node.element.style.left = `${node.x}px`;
+                    node.element.style.top = `${node.y}px`;
+                }
+            });
+            
+            // Recreate web connections periodically
+            if (Math.random() > 0.95) { // Only update connections occasionally
+                createWebConnections(nodes, starsContainer);
+            }
+            
+            // Continue animation
+            requestAnimationFrame(() => animateConstellation(nodes));
+        }
+
+        function setupRotatingBoxes(navItems) {
             const rotationPath = document.getElementById('box-rotation-path');
             
             // Apply rotation animation to the path
@@ -164,12 +381,7 @@
                 
                 rotationPath.appendChild(box);
             });
-            
-            // Enter site button
-            document.getElementById('enter-site-btn').addEventListener('click', function() {
-                window.location.href = 'index.html';
-            });
-        });
+        }
     </script>
 </body>
 </html>
