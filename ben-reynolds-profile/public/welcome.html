@@ -194,8 +194,8 @@
                 // Calculate screen dimensions for positioning
                 const centerX = window.innerWidth / 2;
                 const centerY = window.innerHeight / 2;
-                const marginX = window.innerWidth * 0.15; // 15% margin from screen edges
-                const marginY = window.innerHeight * 0.15; // 15% margin from screen edges
+                const marginX = window.innerWidth * 0.35; // Reduced from 15% to 10% to make nodes closer together
+                const marginY = window.innerHeight * 0.25; // Reduced from 15% to 10% to make nodes closer together
                 
                 // Fixed positions for each nav node
                 const positions = [
@@ -206,7 +206,7 @@
                     { x: window.innerWidth - marginX, y: window.innerHeight - marginY } // Contact (bottom right)
                 ];
                 
-                const nodeSize = 90; // Size of nav nodes
+                const nodeSize = 90; // Changed from 200 to match node size defined in style
                 
                 // Create the nav nodes with fixed positions
                 navItems.forEach((item, index) => {
@@ -291,8 +291,8 @@
                 // Calculate screen dimensions for positioning
                 const centerX = window.innerWidth / 2;
                 const centerY = window.innerHeight / 2;
-                const marginX = window.innerWidth * 0.15; // 15% margin from screen edges
-                const marginY = window.innerHeight * 0.15; // 15% margin from screen edges
+                const marginX = window.innerWidth * 0.15; // Reduced from 25% to 15%
+                const marginY = window.innerHeight * 0.15; // Reduced from 25% to 15%
                 
                 // Fixed positions for each node
                 const positions = [
@@ -303,7 +303,7 @@
                     { x: window.innerWidth - marginX, y: window.innerHeight - marginY } // Contact (bottom right)
                 ];
                 
-                const nodeSize = 90;
+                const nodeSize = 90; // Changed from 200 to match node size defined in style
                 
                 // Update node positions to fixed locations
                 navNodes.forEach((node, index) => {
@@ -670,23 +670,7 @@
                     });
                 });
                 
-                // Draw connections between nav nodes
-                for (let i = 0; i < navNodes.length; i++) {
-                    for (let j = i + 1; j < navNodes.length; j++) {
-                        const dx = navNodes[i].x - navNodes[j].x;
-                        const dy = navNodes[i].y - navNodes[j].y;
-                        
-                        // Always connect nav nodes regardless of distance
-                        const opacity = 0.4;
-                        
-                        ctx.beginPath();
-                        ctx.moveTo(navNodes[i].x, navNodes[i].y);
-                        ctx.lineTo(navNodes[j].x, navNodes[j].y);
-                        ctx.strokeStyle = `rgba(255, 255, 255, ${opacity})`;
-                        ctx.lineWidth = 1.0;
-                        ctx.stroke();
-                    }
-                }
+                // Removed the code that draws connections between nav nodes
             }
             
             // Mouse tracking
